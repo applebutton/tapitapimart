@@ -1,0 +1,15 @@
+{
+  "id": "./",
+  "name": "Tapitapimart — Little Games",
+  "short_name": "Tapitapimart",
+  "description": "Small games. Big rematches. Start with tic tac toe.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f2e9",
+  "theme_color": "#172b27",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
