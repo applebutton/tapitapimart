@@ -1,6 +1,8 @@
 # Tapitapimart
 
-A collection of small progressive web games. The first game is local, two-player tic tac toe, with alternating starting players and session scores.
+A collection of small progressive web games. The first game is tic tac toe, with a computer opponent or local two-player play, alternating starting players, and session scores.
+
+Choose Easy for random moves, Medium for immediate wins and blocks, or Hard for an unbeatable minimax opponent. You play X against the computer. Changing opponent or difficulty clears the current board and scores. Computer play also works offline.
 
 ## Develop
 

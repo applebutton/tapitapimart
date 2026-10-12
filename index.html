@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#172b27">
-  <meta name="description" content="Little games for a good time. Play tic tac toe with a friend, even offline.">
+  <meta name="description" content="Little games for a good time. Play tic tac toe with a friend or the computer, even offline.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -19,22 +19,27 @@
       <section class="intro">
         <span class="tag">THE CLASSICS</span>
         <h1>Three in<br>a <em>row.</em></h1>
-        <p class="description">A little friendly competition.<br>Grab a friend, pick a side, and make your move.</p>
-        <div class="game-meta"><span>02 PLAYERS</span><span>~1 MINUTE</span><span>OFFLINE READY</span></div>
-        <details class="rules"><summary>How to play <span>+</span></summary><p>Take turns placing X and O on the board. Get three of your marks in a row, column, or diagonal to win. If the board fills up, it's a draw. The starting player alternates each round.</p></details>
+        <p class="description">A little friendly competition.<br>Challenge the computer or a friend, and make your move.</p>
+        <div class="game-meta"><span>1–2 PLAYERS</span><span>~1 MINUTE</span><span>OFFLINE READY</span></div>
+        <details class="rules"><summary>How to play <span>+</span></summary><p>Take turns placing X and O on the board. Get three of your marks in a row, column, or diagonal to win. If the board fills up, it's a draw. The starting player alternates each round. Against the computer, you play X. Easy makes random moves, Medium wins or blocks immediate threats, and Hard plays perfectly. Changing opponent or difficulty starts a new session.</p></details>
         <div class="shelf-note"><span>✳</span><p>Small games. Big rematches.<br><strong>More games coming to the shelf.</strong></p></div>
       </section>
       <section class="game" aria-label="Tic tac toe">
         <div class="game-top"><h2>Tic tac toe</h2><span class="local-badge">LOCAL PLAY</span></div>
+        <div class="game-settings">
+          <label>Opponent<select id="opponent"><option value="computer">Computer</option><option value="friend">Friend · 2 players</option></select></label>
+          <label id="difficulty-label">Difficulty<select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></label>
+        </div>
+        <p id="difficulty-note" class="difficulty-note">Medium: spots wins and blocks your next winning move.</p>
         <div class="scoreboard" aria-label="Session scores">
-          <div id="player-x" class="score player active"><span class="mark x">X</span><div><span>PLAYER X</span><strong id="score-x">0</strong></div></div>
+          <div id="player-x" class="score player active"><span class="mark x">X</span><div><span id="label-x">YOU · X</span><strong id="score-x">0</strong></div></div>
           <div class="score draws"><span>DRAWS</span><strong id="score-draw">0</strong></div>
-          <div id="player-o" class="score player"><span class="mark o">O</span><div><span>PLAYER O</span><strong id="score-o">0</strong></div></div>
+          <div id="player-o" class="score player"><span class="mark o">O</span><div><span id="label-o">COMPUTER</span><strong id="score-o">0</strong></div></div>
         </div>
         <p id="status" class="status" role="status" aria-live="polite">X's turn — make your move</p>
         <div id="board" class="board" role="group" aria-label="Game board"></div>
         <div class="game-actions"><button id="new-round" class="button primary">New round <span>↗</span></button><button id="reset" class="button subtle">Reset scores</button></div>
-        <p class="game-footnote">Same screen. Good company. No sign-up.</p>
+        <p class="game-footnote">A little challenge. No sign-up.</p>
       </section>
     </div>
   </main>
