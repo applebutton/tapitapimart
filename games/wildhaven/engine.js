@@ -1,3 +1,4 @@
+import { AVATAR_OPTIONS, FREE_AVATAR, SHOP, SKU } from './catalog.js';
 export const SPECIES = [
   { name: 'Mossbun', biome: 'meadow', color: '#a4cf72', accent: '#55764a', shape: 'bunny', note: 'A little gardener with leaves for ears.' },
   { name: 'Sunpuff', biome: 'meadow', color: '#ffd779', accent: '#c78348', shape: 'round', note: 'Stores warm sunshine in its fluffy coat.' },
@@ -18,6 +19,8 @@ export const LIMIT = 30;
 export const MATERIALS = {
   berries: { name: 'Berries', color: '#df9caa', icon: '●', hint: 'Feed your friends. Vacuum pink berry bushes.' },
   wood: { name: 'Wood', color: '#c49d76', icon: '▰', hint: 'Build your home. Vacuum fallen branches.' },
+  metal: { name: 'Metal', color: '#9bb3c1', icon: '◆', hint: 'Vacuum shiny metal deposits or visit the Creator’s Shed.' },
+  starfood: { name: 'Star cookies', color: '#e3c87c', icon: '★', hint: 'Buy at the Creator’s Shed. +40 happiness for penned friends.' },
   stone: { name: 'Moonstones', color: '#a7b8d2', icon: '◆', hint: 'Build your home. Vacuum shiny rock piles.' },
 };
 export const PENS = [
@@ -41,13 +44,13 @@ export function creatureInfo(type) {
   return { ...first, name: `Giant ${starts[a]}${ends[b]}`, accent: second.color, giant: true, genes: [a, b], note: `A big, bouncy blend of ${first.name} and ${second.name}.` };
 }
 export function freshState(now = Date.now()) {
-  return { version: 2, gems: 0, materials: { berries: 8, wood: 0, stone: 0 }, collection: [], homeLevel: 0, biome: 'meadow', x: 480, y: 400, health: 3, coat: '#dd846a', lastSaved: now, nextId: 1 };
+  return { version: 3, owned: [], avatar: {skin:'#e7b98e',hairColor:'#79523b',hair:'bob',outfit:'overalls',accessory:'none'}, toolStyle:'mint', ranchTheme:'woodland', pet:null, yaw:0, pitch:-.14, gems: 0, materials: { berries: 8, wood: 0, stone: 0, metal:0, starfood:0 }, collection: [], homeLevel: 0, biome: 'meadow', x: 480, y: 400, health: 3, coat: '#dd846a', lastSaved: now, nextId: 1 };
 }
 const clamp = (v, min, max, fallback) => Number.isFinite(v) ? Math.max(min, Math.min(max, v)) : fallback;
 export function loadState(raw, now = Date.now()) {
   try {
     const s = JSON.parse(raw);
-    if (![1, 2].includes(s?.version) || !Array.isArray(s.collection)) return freshState(now);
+    if (![1, 2, 3].includes(s?.version) || !Array.isArray(s.collection)) return freshState(now);
     const state = freshState(now);
     state.gems = Math.floor(clamp(s.gems, 0, 1e9, 0));
     for (const key of Object.keys(MATERIALS)) state.materials[key] = Math.floor(clamp(s.version === 1 ? (key === 'berries' ? s.treats : 0) : s.materials?.[key], 0, LIMIT, key === 'berries' ? 8 : 0));
@@ -68,6 +71,13 @@ export function loadState(raw, now = Date.now()) {
     state.biome = Object.hasOwn(BIOMES, s.biome) ? s.biome : 'meadow';
     state.x = clamp(s.x, 35, WIDTH - 35, 480); state.y = clamp(s.y, 105, HEIGHT - 35, 400);
     state.coat = ['#dd846a', '#7a99cc', '#9b80ba', '#6e9f80'].includes(s.coat) ? s.coat : state.coat;
+    state.owned = Array.isArray(s.owned) ? [...new Set(s.owned.filter(id=>Object.hasOwn(SKU,id) && SKU[id].kind!=='supply'))] : [];
+    for(const key of Object.keys(AVATAR_OPTIONS)) if(avatarAllowed(state,key,s.avatar?.[key])) state.avatar[key]=s.avatar[key];
+    if(s.toolStyle==='mint'||state.owned.includes(s.toolStyle==='petal'?'petal-vac':'starlight-vac'))state.toolStyle=['mint','petal','starlight'].includes(s.toolStyle)?s.toolStyle:'mint';
+    if(['cute','modern'].includes(s.ranchTheme)&&state.owned.includes(`${s.ranchTheme}-theme`))state.ranchTheme=s.ranchTheme;
+    if(['cloud-cat','star-pup'].includes(s.pet)&&state.owned.includes(s.pet))state.pet=s.pet;
+    if(s.version<3&&state.biome==='ranch'){state.x=480;state.y=548;}
+    state.yaw=clamp(s.yaw,-1000,1000,0);state.pitch=clamp(s.pitch,-1.05,.8,-.14);
     return state;
   } catch { return freshState(now); }
 }
@@ -119,6 +129,12 @@ export function careFor(state, id, action, now = Date.now()) {
     state.materials.berries--; c.happiness = Math.min(100, c.happiness + 25);
     return { ok: true, message: `${name} loved that berry!` };
   }
+  if (action === 'treat') {
+    if(!state.materials.starfood)return {ok:false,message:'Find star cookies in the Creator’s Shed.'};
+    if(c.happiness>=100)return {ok:false,message:'Already perfectly happy!'};
+    state.materials.starfood--;c.happiness=Math.min(100,c.happiness+40);
+    return {ok:true,message:`${name} loved that star cookie! +40 happiness`};
+  }
   if (action === 'pet') { c.happiness = Math.min(100, c.happiness + 10); return { ok: true, message: `${name} snuggles closer. +10 happiness` }; }
   if (action === 'reward') {
     if (c.happiness < 75) return { ok: false, message: 'Give some care first. Gifts need 75 happiness.' };
@@ -134,7 +150,7 @@ export function tradeTreats(state) {
 }
 export function travel(state, biome) {
   if (!Object.hasOwn(BIOMES, biome)) return;
-  state.biome = biome; state.x = 480; state.y = biome === 'ranch' ? 548 : 440;
+  state.biome = biome; state.yaw=0;state.pitch=-.14; state.x = 480; state.y = biome === 'ranch' ? 548 : 440;
   if (biome === 'ranch') state.health = 3;
 }
 export function takeHit(state) {
@@ -160,3 +176,34 @@ export function wander(actor, dt, bounds, random = Math.random) {
   }
   actor.x = Math.max(bounds.minX, Math.min(bounds.maxX, actor.x)); actor.y = Math.max(bounds.minY, Math.min(bounds.maxY, actor.y));
 }
+
+export function avatarAllowed(state, key, value) {
+  if(!AVATAR_OPTIONS[key]?.includes(value))return false;
+  if(key==='skin'||key==='hairColor')return true;
+  return FREE_AVATAR[key]?.includes(value)||state.owned.includes(value);
+}
+export function setAvatar(state,key,value) {
+  if(!avatarAllowed(state,key,value))return false;
+  state.avatar[key]=value;return true;
+}
+export function purchase(state,id) {
+  const item=Object.hasOwn(SKU,id)?SKU[id]:null;
+  if(!item||state.biome!=='ranch')return {ok:false,message:'Visit the Creator’s Shed at your ranch.'};
+  if(item.kind!=='supply'&&state.owned.includes(id))return equipPurchase(state,id);
+  if(state.gems<item.price)return {ok:false,message:`You need ${item.price-state.gems} more stardust. Catch creatures or collect gifts!`};
+  if(item.kind==='supply'&&state.materials[item.material]+item.amount>LIMIT)return {ok:false,message:`Make room for ${item.amount} ${MATERIALS[item.material].name.toLowerCase()}. Each inventory slot holds 30.`};
+  state.gems-=item.price;
+  if(item.kind==='supply')state.materials[item.material]+=item.amount;
+  else {state.owned.push(id);equipPurchase(state,id);}
+  return {ok:true,message:`${item.name} is yours!${item.kind==='furniture'?' It is already placed beside your home.':''}`};
+}
+export function equipPurchase(state,id) {
+  const item=Object.hasOwn(SKU,id)?SKU[id]:null;if(!item||!state.owned.includes(id))return {ok:false,message:'Buy this item first.'};
+  if(item.kind==='avatar')state.avatar[item.slot]=item.value;
+  if(item.kind==='tool')state.toolStyle=item.value;
+  if(item.kind==='theme')state.ranchTheme=item.value;
+  if(item.kind==='pet')state.pet=item.value;
+  return {ok:true,message:`${item.name} is ready!`};
+}
+export function vacuumRange(state) {return state.owned.includes('long-reach')?160:110;}
+export function vacuumDelay(state) {return state.owned.includes('quick-vac')?.3:.6;}

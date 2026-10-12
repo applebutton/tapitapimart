@@ -78,7 +78,7 @@ test('respawn preserves inventory, materials, pens, buildings and rewards', () =
 
 test('old saves migrate every companion into pens and retain the existing home', () => {
   const old={version:1,gems:120,treats:8,collection:[{id:1,species:0,happiness:85,rewardAt:2000},{id:2,species:3,happiness:60,rewardAt:2000}],biome:'ranch',x:480,y:440,lastSaved:1000,coat:'#7a99cc'};
-  const s=loadState(JSON.stringify(old),1000);assert.equal(s.version,2);assert.equal(s.collection.length,2);
+  const s=loadState(JSON.stringify(old),1000);assert.equal(s.version,3);assert.equal(s.collection.length,2);
   assert.deepEqual(s.collection.map(c=>c.location),[0,1]);assert.equal(s.materials.berries,8);assert.equal(s.homeLevel,1);assert.equal(s.gems,120);
   const again=loadState(JSON.stringify(s),1000);assert.deepEqual(again.collection,s.collection);assert.equal(again.coat,'#7a99cc');
   assert.equal(loadState('bad save').collection.length,0);
