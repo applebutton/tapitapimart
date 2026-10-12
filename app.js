@@ -99,7 +99,14 @@ installButton.addEventListener('click', async () => {
 });
 window.addEventListener('appinstalled', () => { installButton.hidden = true; });
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(async registration => {
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) document.querySelector('#update-app').hidden = false;
+  });
+  document.querySelector('#update-app').addEventListener('click', () => window.location.reload());
+  navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(async registration => {
+    // Explicitly check for a new worker when returning to an existing install.
+    registration.update().catch(() => {});
     await navigator.serviceWorker.ready;
     document.querySelector('#connection').textContent = '✳ Ready for offline play';
   }).catch(() => {
