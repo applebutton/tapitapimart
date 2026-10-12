@@ -44,7 +44,7 @@ export function creatureInfo(type) {
   return { ...first, name: `Giant ${starts[a]}${ends[b]}`, accent: second.color, giant: true, genes: [a, b], note: `A big, bouncy blend of ${first.name} and ${second.name}.` };
 }
 export function freshState(now = Date.now()) {
-  return { version: 3, owned: [], avatar: {skin:'#e7b98e',hairColor:'#79523b',hair:'bob',outfit:'overalls',accessory:'none'}, toolStyle:'mint', ranchTheme:'woodland', pet:null, yaw:0, pitch:-.14, gems: 0, materials: { berries: 8, wood: 0, stone: 0, metal:0, starfood:0 }, collection: [], homeLevel: 0, biome: 'meadow', x: 480, y: 400, health: 3, coat: '#dd846a', lastSaved: now, nextId: 1 };
+  return { version: 3, sugarcloudEquipped: true, owned: [], avatar: {skin:'#e7b98e',hairColor:'#efa0bd',hair:'sugarcloud-waves',outfit:'sugarcloud-dress',accessory:'bunny-beret'}, toolStyle:'mint', ranchTheme:'woodland', pet:null, yaw:0, pitch:-.14, gems: 0, materials: { berries: 8, wood: 0, stone: 0, metal:0, starfood:0 }, collection: [], homeLevel: 0, biome: 'meadow', x: 480, y: 400, health: 3, coat: '#dd846a', lastSaved: now, nextId: 1 };
 }
 const clamp = (v, min, max, fallback) => Number.isFinite(v) ? Math.max(min, Math.min(max, v)) : fallback;
 export function loadState(raw, now = Date.now()) {
@@ -78,6 +78,7 @@ export function loadState(raw, now = Date.now()) {
     if(['cloud-cat','star-pup'].includes(s.pet)&&state.owned.includes(s.pet))state.pet=s.pet;
     if(s.version<3&&state.biome==='ranch'){state.x=480;state.y=548;}
     state.yaw=clamp(s.yaw,-1000,1000,0);state.pitch=clamp(s.pitch,-1.05,.8,-.14);
+    if (!s.sugarcloudEquipped) Object.assign(state.avatar, {hairColor:'#efa0bd',hair:'sugarcloud-waves',outfit:'sugarcloud-dress',accessory:'bunny-beret'});
     return state;
   } catch { return freshState(now); }
 }

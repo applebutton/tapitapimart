@@ -22,7 +22,7 @@ function save() {
   state.lastSaved = Date.now();
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); saveOkay = true; }
   catch { saveOkay = false; }
-  $('#save-status').textContent = saveOkay ? 'Saved on this device · v7' : 'Saving unavailable · keep this tab open';
+  $('#save-status').textContent = saveOkay ? 'Saved on this device · v8' : 'Saving unavailable · keep this tab open';
 }
 function announce(message) { $('#message').textContent = message; if($('#inventory').open)$('#inventory-message').textContent=message;if($('#shed-dialog').open)$('#shop-message').textContent=message;if($('#avatar-dialog').open)$('#avatar-message').textContent=message; }
 function scatter(x, y, color, count = 14) {
@@ -76,7 +76,7 @@ function drawCreature(context, species, x, y, size = 1) {
   ellipse(context,0,13,23,6,'#5e78631b');ellipse(context,0,-8,25,24,gradient);ellipse(context,0,0,14,10,s.giant?s.accent:'#fff3de');
   if(s.shape==='bunny'){ellipse(context,-10,-30,6,9,s.color);ellipse(context,10,-30,6,9,s.color);}
   if(s.shape==='fox'){ellipse(context,-17,-26,7,7,s.color);ellipse(context,17,-26,7,7,s.color);}
-  ellipse(context,-8,13,7,4,s.color);ellipse(context,8,13,7,4,s.color);ellipse(context,-7,-11,2,2.8,'#57443f');ellipse(context,7,-11,2,2.8,'#57443f');ellipse(context,-14,-5,4,2,'#e9aeb4');ellipse(context,14,-5,4,2,'#e9aeb4');ellipse(context,0,-4,2,1,'#a87e77');
+  ellipse(context,-8,13,7,4,s.color);ellipse(context,8,13,7,4,s.color);ellipse(context,-7,-11,3,4,'#57354f');ellipse(context,7,-11,3,4,'#57354f');ellipse(context,-7,-10,2,2.4,'#b56391');ellipse(context,7,-10,2,2.4,'#b56391');ellipse(context,-8,-12,1.1,1.4,'#fffaff');ellipse(context,6,-12,1.1,1.4,'#fffaff');ellipse(context,-14,-5,4,2,'#e9aeb4');ellipse(context,14,-5,4,2,'#e9aeb4');ellipse(context,0,-4,2,1,'#a87e77');
   if(s.giant){ellipse(context,0,-26,4,4,'#fff1b0');}context.restore();
 }
 function modalOpen(){return Boolean(document.querySelector('dialog[open]'));}

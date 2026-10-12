@@ -37,3 +37,9 @@ test('version 2 ranches migrate to 3D without changing creatures, materials or b
  const s={version:2,gems:27,materials:{berries:9,wood:15,stone:22},collection:[{species:'giant-0-1',location:2,happiness:80,rewardAt:5000}],homeLevel:3,biome:'ranch',x:480,y:548,coat:'#9b80ba',lastSaved:1000};
  const r=loadState(JSON.stringify(s),1000);assert.equal(r.version,3);assert.equal(r.homeLevel,3);assert.equal(r.gems,27);assert.equal(r.collection[0].location,2);assert.equal(r.collection[0].species,'giant-0-1');assert.equal(r.materials.wood,15);assert.equal(r.materials.metal,0);assert.equal(r.coat,s.coat);assert.deepEqual(r.owned,[]);
 });
+
+test('Sugarcloud equips once on older saves, preserves progress and respects later wardrobe changes',()=>{
+ const old=freshState();delete old.sugarcloudEquipped;old.avatar.skin='#805239';old.avatar.outfit='hoodie';old.gems=123;old.materials.wood=20;catchCreature(old,0);const s=loadState(JSON.stringify(old));
+ assert.equal(s.avatar.skin,'#805239');assert.equal(s.avatar.outfit,'sugarcloud-dress');assert.equal(s.avatar.hair,'sugarcloud-waves');assert.equal(s.avatar.accessory,'bunny-beret');assert.equal(s.gems,old.gems);assert.equal(s.materials.wood,20);assert.equal(s.collection.length,1);
+ assert.equal(setAvatar(s,'outfit','hoodie'),true);assert.equal(setAvatar(s,'accessory','none'),true);const again=loadState(JSON.stringify(s));assert.equal(again.avatar.outfit,'hoodie');assert.equal(again.avatar.accessory,'none');
+});

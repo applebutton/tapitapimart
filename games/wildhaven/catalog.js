@@ -1,9 +1,9 @@
 export const AVATAR_OPTIONS = {
   skin: ['#f5d8bb', '#e7b98e', '#ce936c', '#aa7250', '#805239', '#543929'],
-  hairColor: ['#3e302e', '#79523b', '#c39458', '#e8cc8d', '#c58da8', '#8b80b0'],
-  hair: ['bob', 'curls', 'ponytail', 'space-buns'],
-  outfit: ['overalls', 'hoodie', 'cloud-dress', 'star-hoodie'],
-  accessory: ['none', 'star-clip', 'round-glasses'],
+  hairColor: ['#3e302e', '#79523b', '#c39458', '#e8cc8d', '#c58da8', '#efa0bd', '#8b80b0'],
+  hair: ['bob', 'curls', 'ponytail', 'space-buns', 'sugarcloud-waves'],
+  outfit: ['overalls', 'hoodie', 'cloud-dress', 'star-hoodie', 'sugarcloud-dress'],
+  accessory: ['none', 'star-clip', 'round-glasses', 'bunny-beret'],
 };
 export const SHOP = [
   { id:'cloud-dress', category:'Avatar', name:'Cloud dress', price:14, kind:'avatar', slot:'outfit', value:'cloud-dress', icon:'☁', color:'#c9d8ee', description:'A soft sky-blue dress for your wanderer.' },
@@ -31,4 +31,4 @@ export const SHOP = [
   { id:'cookie-pack', category:'Food', name:'3 star cookies', price:6, kind:'supply', material:'starfood', amount:3, icon:'★', color:'#ead298', description:'A special snack. Each cookie gives 40 happiness.' },
 ];
 export const SKU = Object.fromEntries(SHOP.map(item=>[item.id,item]));
-export const FREE_AVATAR = { hair:['bob','curls','ponytail'], outfit:['overalls','hoodie'], accessory:['none'] };
+export const FREE_AVATAR = { hair:['bob','curls','ponytail','sugarcloud-waves'], outfit:['overalls','hoodie','sugarcloud-dress'], accessory:['none','bunny-beret'] };
