@@ -1,5 +1,5 @@
 import {LANDS,ROOMS,SPOTS,enterRoom,leaveRoom,setLand,placeFurniture} from './housing.js';
-import { World3D, AvatarPreview, shopPicture } from './world3d.js';
+import { World2D, AvatarPreview, shopPicture, drawFriend } from './world2d.js';
 import { SHOP, AVATAR_OPTIONS, SKU } from './catalog.js';
 import { SPECIES, BIOMES, WIDTH, HEIGHT, LIMIT, MATERIALS, PENS, HOME_STAGES, creatureInfo, countCarried, collectMaterial, releaseCreature, vacuumResident, combineCreatures, buildHome, penBounds, wander, freshState, loadState, catchCreature, careFor, tradeTreats, travel, takeHit, setAvatar, avatarAllowed, purchase, vacuumRange, vacuumDelay } from './engine.js';
 
@@ -8,10 +8,10 @@ let state;
 try { state = loadState(localStorage.getItem(SAVE_KEY)); } catch { state = freshState(); }
 const canvas = document.querySelector('#world');
 let world, preview;
-try { world = new World3D(canvas); } catch(error) {
+try { world = new World2D(canvas); } catch(error) {
   document.querySelector('#graphics-error').hidden=false;
-  document.querySelector('#graphics-error').textContent='This 3D world needs WebGL 2. Please open it in a browser with graphics acceleration enabled.';
-  console.error('Wildhaven graphics could not start',error);
+  document.querySelector('#graphics-error').textContent='The illustrated world needs canvas support. Please try a current browser.';
+  console.error('Wildhaven canvas could not start',error);
 }
 const $ = selector => document.querySelector(selector);
 let wild = [], wisps = [], berries = [], target = null, keys = new Set();
@@ -23,7 +23,7 @@ function save() {
   state.lastSaved = Date.now();
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); saveOkay = true; }
   catch { saveOkay = false; }
-  $('#save-status').textContent = saveOkay ? 'Saved on this device · v10' : 'Saving unavailable · keep this tab open';
+  $('#save-status').textContent = saveOkay ? 'Saved on this device · v11' : 'Saving unavailable · keep this tab open';
 }
 function announce(message) { $('#message').textContent = message; if($('#inventory').open)$('#inventory-message').textContent=message;if($('#shed-dialog').open)$('#shop-message').textContent=message;if($('#avatar-dialog').open)$('#avatar-message').textContent=message; }
 function scatter(x, y, color, count = 14) {
@@ -72,15 +72,7 @@ function interact() {
   }
   renderUI(); save();
 }
-function drawCreature(context, species, x, y, size = 1) {
-  const s=creatureInfo(species);context.save();context.translate(x,y);context.scale(size,size);
-  const gradient=context.createRadialGradient(-9,-16,3,0,-5,27);gradient.addColorStop(0,'#fff9eb');gradient.addColorStop(.35,s.color);gradient.addColorStop(1,s.color);
-  ellipse(context,0,13,23,6,'#5e78631b');ellipse(context,0,-8,25,24,gradient);ellipse(context,0,0,14,10,s.giant?s.accent:'#fff3de');
-  if(s.shape==='bunny'){ellipse(context,-10,-30,6,9,s.color);ellipse(context,10,-30,6,9,s.color);}
-  if(s.shape==='fox'){ellipse(context,-17,-26,7,7,s.color);ellipse(context,17,-26,7,7,s.color);}
-  ellipse(context,-8,13,7,4,s.color);ellipse(context,8,13,7,4,s.color);ellipse(context,-7,-11,3,4,'#57354f');ellipse(context,7,-11,3,4,'#57354f');ellipse(context,-7,-10,2,2.4,'#b56391');ellipse(context,7,-10,2,2.4,'#b56391');ellipse(context,-8,-12,1.1,1.4,'#fffaff');ellipse(context,6,-12,1.1,1.4,'#fffaff');ellipse(context,-14,-5,4,2,'#e9aeb4');ellipse(context,14,-5,4,2,'#e9aeb4');ellipse(context,0,-4,2,1,'#a87e77');
-  if(s.giant){ellipse(context,0,-26,4,4,'#fff1b0');}context.restore();
-}
+function drawCreature(context,species,x,y,size=1){context.clearRect(0,0,context.canvas.width,context.canvas.height);drawFriend(context,species,x,y+20,size*67);}
 function modalOpen(){return Boolean(document.querySelector('dialog[open]'));}
 function openShed(){
   if(paused||modalOpen()||state.biome!=='ranch')return;
@@ -114,7 +106,7 @@ function renderAvatar(){
 }
 function openAvatar(){
   if(paused||modalOpen())return;keys.clear();lookPointer=null;renderAvatar();$('#avatar-dialog').showModal();
-  if(!preview){try{preview=new AvatarPreview($('#avatar-preview'));}catch(error){$('#avatar-message').textContent='Your choices are saved. The 3D preview needs graphics acceleration.';}}
+  if(!preview){try{preview=new AvatarPreview($('#avatar-preview'));}catch(error){$('#avatar-message').textContent='Your choices are saved. The illustrated preview is unavailable.';}}
   preview?.render(state,clock);
 }
 function syncResidents() {
@@ -240,7 +232,7 @@ function tick(time){
   if(!document.hidden&&!paused&&!modalOpen()){
     clock+=dt;
     const forward=(keys.has('up')?1:0)-(keys.has('down')?1:0),strafe=(keys.has('right')?1:0)-(keys.has('left')?1:0);
-    const dx=-Math.sin(state.yaw)*forward+Math.cos(state.yaw)*strafe,dy=-Math.cos(state.yaw)*forward-Math.sin(state.yaw)*strafe;
+    const dx=strafe,dy=-forward;
     if(dx||dy){const d=Math.hypot(dx,dy),nx=Math.max(35,Math.min(WIDTH-35,state.x+dx/d*95*dt)),ny=Math.max(110,Math.min(HEIGHT-30,state.y+dy/d*95*dt));
       if(!world?.blocked(nx,state.y,state))state.x=nx;if(!world?.blocked(state.x,ny,state))state.y=ny;
     }
@@ -258,7 +250,7 @@ function tick(time){
     for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=85*dt;p.life-=dt;if(p.life<=0)particles.splice(i,1);}
     for(const c of state.collection.filter(c=>c.location!=='vacuum'))c.happiness=Math.max(25,c.happiness-dt/240);
     const close=nearest();
-    $('#world-hint').textContent=close&&close.distance<vacuumRange(state)?`✧ Vacuum ${targetName(close)}`:state.room?'Inside · decorate or go outside':state.biome==='ranch'?'Swipe to look · visit the Creator’s Shed':'Swipe to look · arrows to walk';
+    $('#world-hint').textContent=close&&close.distance<vacuumRange(state)?`✧ Vacuum ${targetName(close)}`:state.room?'Inside · decorate or go outside':state.biome==='ranch'?'Your ranch · swipe or arrows to walk':'Swipe or arrows to walk · vacuum nearby friends';
     $('#reticle').classList.toggle('ready',Boolean(close&&close.distance<vacuumRange(state)));
     $('#interact').firstChild.textContent='✧ Vacuum ';
 
@@ -271,10 +263,6 @@ const directions={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',
 window.addEventListener('keydown',event=>{
   if(modalOpen()||paused||event.target.closest('input, select, summary, a'))return;
   if(event.key.toLowerCase()==='i'){event.preventDefault();openInventory();return;}
-  if(event.key==='q'||event.key==='Q'){state.yaw+=.15;return;}
-  if(event.key==='r'||event.key==='R'){state.yaw-=.15;return;}
-  if(event.key==='PageUp'){event.preventDefault();state.pitch=Math.min(.8,state.pitch+.1);return;}
-  if(event.key==='PageDown'){event.preventDefault();state.pitch=Math.max(-1.05,state.pitch-.1);return;}
   if(directions[event.key]){event.preventDefault();keys.add(directions[event.key]);target=null;}
   if((event.code==='Space'&&!event.target.closest('button'))||event.key.toLowerCase()==='e'){event.preventDefault();if(!event.repeat)interact();}
 });
@@ -287,7 +275,7 @@ canvas.addEventListener('pointerdown',event=>{
 });
 canvas.addEventListener('pointermove',event=>{
   if(!lookPointer||event.pointerId!==lookPointer.id)return;
-  state.yaw-=(event.clientX-lookPointer.x)*.0045;state.pitch=Math.max(-1.05,Math.min(.8,state.pitch-(event.clientY-lookPointer.y)*.0045));lookPointer.x=event.clientX;lookPointer.y=event.clientY;
+  const scale=state.room?.18:.7,dx=Math.max(-12,Math.min(12,(event.clientX-lookPointer.x)*scale)),dy=Math.max(-12,Math.min(12,(event.clientY-lookPointer.y)*scale));const nx=Math.max(35,Math.min(WIDTH-35,state.x+dx)),ny=Math.max(110,Math.min(HEIGHT-30,state.y+dy));if(!world?.blocked(nx,state.y,state))state.x=nx;if(!world?.blocked(state.x,ny,state))state.y=ny;lookPointer.x=event.clientX;lookPointer.y=event.clientY;
 });
 for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,()=>{lookPointer=null;});
 document.querySelectorAll('[data-dir]').forEach(button=>{
@@ -346,3 +334,5 @@ if('serviceWorker' in navigator){
   $('#update').addEventListener('click',()=>location.reload());
   navigator.serviceWorker.register('../../sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
 }
+
+window.addEventListener('wildhaven-art-ready',()=>{collectionSignature='';renderUI();for(const card of $('#shop-items').children){const item=SKU[card.dataset.sku];if(item)card.querySelector('img').src=shopPicture(item,state);}});
