@@ -1,3 +1,4 @@
+import {restoreHousing} from './housing.js';
 import { AVATAR_OPTIONS, FREE_AVATAR, SHOP, SKU } from './catalog.js';
 export const SPECIES = [
   { name: 'Mossbun', biome: 'meadow', color: '#a4cf72', accent: '#55764a', shape: 'bunny', note: 'A little gardener with leaves for ears.' },
@@ -44,7 +45,7 @@ export function creatureInfo(type) {
   return { ...first, name: `Giant ${starts[a]}${ends[b]}`, accent: second.color, giant: true, genes: [a, b], note: `A big, bouncy blend of ${first.name} and ${second.name}.` };
 }
 export function freshState(now = Date.now()) {
-  return { version: 3, sugarcloudEquipped: true, owned: [], avatar: {skin:'#e7b98e',hairColor:'#efa0bd',hair:'sugarcloud-waves',outfit:'sugarcloud-dress',accessory:'bunny-beret'}, toolStyle:'mint', ranchTheme:'woodland', pet:null, yaw:0, pitch:-.14, gems: 0, materials: { berries: 8, wood: 0, stone: 0, metal:0, starfood:0 }, collection: [], homeLevel: 0, biome: 'meadow', x: 480, y: 400, health: 3, coat: '#dd846a', lastSaved: now, nextId: 1 };
+  return { version: 3, room:null, ranchLand:'sakura', decor:{}, sugarcloudEquipped: true, owned: [], avatar: {skin:'#e7b98e',hairColor:'#efa0bd',hair:'sugarcloud-waves',outfit:'sugarcloud-dress',accessory:'bunny-beret'}, toolStyle:'mint', ranchTheme:'woodland', pet:null, yaw:0, pitch:-.14, gems: 0, materials: { berries: 8, wood: 0, stone: 0, metal:0, starfood:0 }, collection: [], homeLevel: 0, biome: 'meadow', x: 480, y: 400, health: 3, coat: '#dd846a', lastSaved: now, nextId: 1 };
 }
 const clamp = (v, min, max, fallback) => Number.isFinite(v) ? Math.max(min, Math.min(max, v)) : fallback;
 export function loadState(raw, now = Date.now()) {
@@ -79,6 +80,7 @@ export function loadState(raw, now = Date.now()) {
     if(s.version<3&&state.biome==='ranch'){state.x=480;state.y=548;}
     state.yaw=clamp(s.yaw,-1000,1000,0);state.pitch=clamp(s.pitch,-1.05,.8,-.14);
     if (!s.sugarcloudEquipped) Object.assign(state.avatar, {hairColor:'#efa0bd',hair:'sugarcloud-waves',outfit:'sugarcloud-dress',accessory:'bunny-beret'});
+    restoreHousing(state,s);
     return state;
   } catch { return freshState(now); }
 }
@@ -150,6 +152,7 @@ export function tradeTreats(state) {
   state.gems -= 5; state.materials.berries += 5; return true;
 }
 export function travel(state, biome) {
+  state.room=null;
   if (!Object.hasOwn(BIOMES, biome)) return;
   state.biome = biome; state.yaw=0;state.pitch=-.14; state.x = 480; state.y = biome === 'ranch' ? 548 : 440;
   if (biome === 'ranch') state.health = 3;
