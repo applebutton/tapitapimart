@@ -1,5 +1,5 @@
-const CACHE = 'tapitapimart-v8';
-const ASSETS = ['./', './index.html', './styles.css', './app.js', './games/tic-tac-toe/engine.js', './games/tic-tac-toe/computer.js', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './games/wildhaven/', './games/wildhaven/index.html', './games/wildhaven/wildhaven.css', './games/wildhaven/game.js', './games/wildhaven/engine.js', './games/wildhaven/catalog.js', './games/wildhaven/world3d.js', './vendor/three/three.module.js', './vendor/three/three.core.js'];
+const CACHE = 'tapitapimart-v9';
+const ASSETS = ['./', './index.html', './styles.css', './app.js', './games/tic-tac-toe/engine.js', './games/tic-tac-toe/computer.js', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './games/wildhaven/', './games/wildhaven/index.html', './games/wildhaven/wildhaven.css', './games/wildhaven/game.js', './games/wildhaven/engine.js', './games/wildhaven/catalog.js', './games/wildhaven/world3d.js', './games/wildhaven/anime-sky.png', './vendor/three/three.module.js', './vendor/three/three.core.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS.map(url => new Request(url, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
