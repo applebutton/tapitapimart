@@ -1,11 +1,15 @@
+import {HOUSE_STYLES} from './catalog.js';
+import {animeCreature,animeTree,animeAvatar,disposeAvatar} from './anime-art3d.js';
 import {SPOTS} from './housing.js';
 import * as THREE from '../../vendor/three/three.module.js';
 import { BIOMES, PENS, creatureInfo } from './engine.js';
 const SCALE=.04;
 const wx=x=>(x-480)*SCALE, wz=y=>(y-290)*SCALE;
 const geo=new Map(), mats=new Map(), labels=new Map();
+const inkLines=new THREE.LineBasicMaterial({color:'#38243e',toneMapped:false});
+const inkHull=new THREE.MeshBasicMaterial({color:'#38243e',side:THREE.BackSide,toneMapped:false});
 const shadowMaterial=new THREE.MeshBasicMaterial({color:'#566656',transparent:true,opacity:.12,depthWrite:false});
-function material(color, glow=false){const key=color+glow;if(!mats.has(key))mats.set(key,new THREE.MeshStandardMaterial({color,roughness:.85,metalness:.02,...(glow?{emissive:color,emissiveIntensity:.5}:{})}));return mats.get(key);}
+function material(color, glow=false){const key=color+glow;if(!mats.has(key))mats.set(key,new THREE.MeshToonMaterial({color,gradientMap:toonRamp,...(glow?{emissive:color,emissiveIntensity:.5}:{})}));return mats.get(key);}
 function geometry(key,create){if(!geo.has(key))geo.set(key,create());return geo.get(key);}
 function ball(parent,x,y,z,sx,sy,sz,color){const m=new THREE.Mesh(geometry(Math.max(sx,sy,sz)<.18?'detail-sphere':'sphere',()=>new THREE.SphereGeometry(1,Math.max(sx,sy,sz)<.18?10:20,Math.max(sx,sy,sz)<.18?7:14)),material(color));m.position.set(x,y,z);m.scale.set(sx,sy,sz);parent.add(m);return m;}
 function box(parent,x,y,z,w,h,d,color,round=.07){
@@ -35,26 +39,7 @@ function face(g,scale=1){
  ball(g,-.26,.44,.40,.066,.027,.018,'#edb8b7');ball(g,.26,.44,.40,.066,.027,.018,'#edb8b7');
  ball(g,0,.44,.464,.035,.02,.013,'#92766d');
 }
-export function creatureMesh(type){
- const s=creatureInfo(type),g=new THREE.Group();
- // Original round, shy little characters: soft balls, tiny faces, little feet.
- ball(g,0,.49,0,.49,.48,.43,s.color);ball(g,0,.35,.33,.30,.23,.13,s.giant?s.accent:'#fff1d9');
- ball(g,-.20,.085,.10,.14,.075,.15,s.color);ball(g,.20,.085,.10,.14,.075,.15,s.color);
- ball(g,-.43,.4,.035,.085,.12,.09,s.color);ball(g,.43,.4,.035,.085,.12,.09,s.color);
- face(g);
- if(s.shape==='bunny'){ball(g,-.19,.94,0,.12,.20,.11,s.color);ball(g,.19,.94,0,.12,.20,.11,s.color);}
- if(s.shape==='fox'){ball(g,-.28,.87,0,.15,.15,.14,s.color);ball(g,.28,.87,0,.15,.15,.14,s.color);ball(g,0,.30,-.43,.19,.16,.20,s.accent);}
- if(s.shape==='moth'){ball(g,-.45,.55,-.05,.19,.25,.08,'#ecddf3');ball(g,.45,.55,-.05,.19,.25,.08,'#ecddf3');}
- if(s.shape==='drop')ball(g,.04,.93,0,.10,.13,.10,'#c2efe4');
- if(s.shape==='round'){ball(g,-.08,.94,0,.11,.08,.1,'#ffeac0');ball(g,.08,.94,0,.11,.08,.1,'#ffeac0');}
- if(s.shape==='bunny'){for(const side of [-1,1]){const leaf=ball(g,side*.1,1.15,0,.065,.17,.025,'#8db991');leaf.rotation.z=side*.5;}ribbon(g,0,.26,.45,.09);}
- if(s.shape==='round'){for(let i=0;i<8;i++){const t=i/8*Math.PI*2;const petal=ball(g,Math.cos(t)*.22,.88+Math.sin(t)*.16,-.04,.10,.17,.035,'#ffe3a1');petal.rotation.z=-t;}ball(g,0,.93,.02,.11,.10,.025,'#fff0c4');}
- if(s.shape==='fox'){for(const side of [-1,1])ball(g,side*.28,.90,.105,.07,.09,.025,'#ffe9f3');ribbon(g,.29,.70,.27,.09);}
- if(s.shape==='moth'){for(const side of [-1,1]){ball(g,side*.50,.61,-.015,.21,.27,.035,'#d4b8e9');ball(g,side*.50,.61,.02,.13,.17,.015,'#f9e9f7');strand(g,[[side*.12,.86,0],[side*.17,1.05,0],[side*.24,1.08,0]],.012,'#b99bc9');ball(g,side*.24,1.08,0,.038,.038,.038,'#ffe4a2');}}
- if(s.shape==='drop'){torus(g,0,.94,0,.13,.015,'#ddfaff').rotation.x=Math.PI/2;ball(g,-.26,.65,.33,.045,.065,.016,'#f4ffff');}
- if(s.giant){g.scale.setScalar(1.75);ball(g,0,.94,.25,.09,.09,.045,'#fff1b0');}
- return anime(g);
-}
+export function creatureMesh(type){const g=new THREE.Group();g.add(animeCreature(type));return g;}
 function strand(g,points,radius,color){const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));const key='strand:'+JSON.stringify(points)+radius;const m=new THREE.Mesh(geometry(key,()=>new THREE.TubeGeometry(curve,14,radius,7,false)),material(color));g.add(m);return m;}
 function ribbon(g,x,y,z,size,color='#ee9bbb'){
  for(const side of [-1,1]){const shape=new THREE.Shape();shape.moveTo(0,0);shape.quadraticCurveTo(side*size,-size*.5,side*size,-size*.15);shape.lineTo(side*size,size*.6);shape.quadraticCurveTo(side*size*.5,size*.55,0,0);const m=new THREE.Mesh(new THREE.ShapeGeometry(shape),material(color));m.material.side=THREE.DoubleSide;m.position.set(x,y,z);g.add(m);}
@@ -90,7 +75,7 @@ export function avatarMesh(state){
  if(a.accessory==='star-clip')ribbon(g,.15,1.65,.12,.055,'#f2d888');
  return anime(g);
 }
-function petMesh(type){const g=new THREE.Group(),col=type==='cloud-cat'?'#f6eadb':'#e6bf91';ball(g,0,.32,0,.34,.32,.31,col);ball(g,0,.2,.23,.21,.16,.08,'#fff7e7');ball(g,-.2,.60,0,.11,.13,.09,col);ball(g,.2,.60,0,.11,.13,.09,col);animeEye(g,-.09,.36,.29,.035);animeEye(g,.09,.36,.29,.035);ball(g,-.18,.30,.26,.04,.02,.015,'#e9a6bb');ball(g,.18,.30,.26,.04,.02,.015,'#e9a6bb');ball(g,0,.29,.32,.025,.02,.012,'#b78b86');ball(g,0,.28,-.32,.12,.15,.16,col);return anime(g);}
+function petMesh(type){const g=new THREE.Group();const art=animeCreature(type==='cloud-cat'?2:4);art.scale.multiplyScalar(.65);g.add(art);return g;}
 function vacuumMesh(style,skin,longReach,clothes){
  const g=new THREE.Group(),body=style==='petal'?'#eab5ce':style==='starlight'?'#b7a7dc':'#acd9d2',trim=style==='starlight'?'#e5cd8e':'#f4e5cf';
  ball(g,.04,-.16,.09,.11,.12,.19,skin);box(g,.04,-.23,.28,.2,.2,.30,clothes,.07);box(g,0,0,0,.38,.36,.66,body,.1);box(g,0,.035,.07,.26,.25,.35,'#d4efe8',.06);
@@ -107,7 +92,7 @@ function paintedGround(ridge){
 }
 function batchScenery(group){
  group.updateMatrixWorld(true);const buckets=new Map(),remove=[];
- group.traverse(o=>{if(!o.isMesh)return;const key=o.geometry.uuid+o.material.uuid;if(!buckets.has(key))buckets.set(key,[]);buckets.get(key).push(o);remove.push(o);});
+ group.traverse(o=>{if(!o.isMesh||o.parent?.isMesh||o.children.some(child=>child.isLineSegments))return;const key=o.geometry.uuid+o.material.uuid;if(!buckets.has(key))buckets.set(key,[]);buckets.get(key).push(o);remove.push(o);});
  for(const meshes of buckets.values()){const inst=new THREE.InstancedMesh(meshes[0].geometry,meshes[0].material,meshes.length);meshes.forEach((m,i)=>inst.setMatrixAt(i,m.matrixWorld));inst.instanceMatrix.needsUpdate=true;group.add(inst);}
  remove.forEach(m=>m.removeFromParent());
 }
@@ -124,12 +109,29 @@ export function furnitureMesh(id){const g=new THREE.Group();
  if(id==='lanterns'){cylinder(g,0,.65,0,.025,.05,1.3,'#b58ba9');ball(g,0,1.38,0,.18,.24,.18,'#ffe9ac');torus(g,0,1.57,0,.08,.015,'#ddbad7');}
  return g;
 }
+export function houseMesh(style='sakura-cottage',level=1){
+ const spec=HOUSE_STYLES[style]||HOUSE_STYLES['sakura-cottage'],g=new THREE.Group(),raised=spec.shape==='beach'?.35:0;
+ box(g,0,1.35+raised,0,5.8,2.7,3.5,spec.wall,.08);
+ if(spec.shape==='modern'){box(g,0,2.82+raised,0,6.3,.22,3.95,spec.roof,.05);box(g,-1.9,3.2,-.5,1.3,.55,1.7,spec.trim,.05);}
+ else {const roofShape=new THREE.Shape();roofShape.moveTo(-3.25,2.7+raised);roofShape.lineTo(0,4.25+raised);roofShape.lineTo(3.25,2.7+raised);roofShape.closePath();const roof=new THREE.Mesh(geometry(`home-roof:${style}`,()=>new THREE.ExtrudeGeometry(roofShape,{depth:4,bevelEnabled:false})),material(spec.roof));roof.position.z=-2;g.add(roof);for(let i=0;i<5;i++)box(g,0,2.76+i*.28+raised,.04,6.35-i*1.2,.018,4.02,spec.trim,.004);}
+ box(g,0,.87+raised,1.80,1.02,1.75,.10,spec.trim,.1);ball(g,.3,.88+raised,1.88,.045,.045,.04,'#f9df97');
+ for(const side of [-1,1]){const x=side*1.8;box(g,x,1.5+raised,1.80,spec.shape==='modern'?1.45:1.1,1.12,.08,'#bde4ed',.03);box(g,x,1.5+raised,1.87,.035,1.14,.025,'#fff6ee',.003);box(g,x,1.5+raised,1.87,1.12,.035,.025,'#fff6ee',.003);box(g,x,.88+raised,1.9,1.35,.2,.35,spec.trim,.03);for(let k=0;k<5;k++)ball(g,x-.5+k*.25,1.03+raised,1.96,.10,.09,.08,k%2?'#f7bddb':'#fff0ba');}
+ box(g,0,.09,2.08,6.1,.18,1.05,spec.trim,.02);
+ if(spec.shape==='beach'){for(const x of [-2.6,2.6])cylinder(g,x,1.45,2.35,.07,.07,2.5,'#fff6ed');box(g,0,2.73,2.2,6.1,.14,1.2,spec.roof,.02);for(let i=0;i<3;i++)box(g,0,.05+i*.09,2.9-i*.2,1.6,.1,.35,'#fff0dc',.02);}
+ if(spec.shape==='woodland'){for(let i=0;i<8;i++){box(g,0,.25+i*.30,-1.78,5.75,.025,.035,spec.trim,.003);for(const x of [-2.92,2.92])box(g,x,.25+i*.30,0,.035,.025,3.5,spec.trim,.003);}box(g,1.9,3.8,-.65,.55,1.6,.55,'#c0a8b1',.02);}
+ if(spec.shape==='gable'){for(let i=0;i<9;i++){box(g,(i-4)*.57,2.18,2,.59,.08,.60,i%2?'#fff2f8':spec.trim,.02);ball(g,(i-4)*.57,2.08,2.30,.29,.10,.025,i%2?'#fff2f8':spec.trim);}ribbon(g,0,2.5,1.88,.30);}
+ if(level>=2)for(const x of [-2.7,2.7]){cylinder(g,x,.55,2.4,.05,.05,.95,spec.trim);box(g,x,.7,2.2,.05,.06,.6,spec.trim);}
+ if(level>=3){for(const x of [-2.8,2.8]){cylinder(g,x,.3,2.9,.24,.20,.55,spec.trim);ball(g,x,.78,2.9,.32,.3,.28,'#b2d3ac');}}
+ const houseParts=[];g.traverse(o=>{if(o.isMesh)houseParts.push(o);});for(const o of houseParts){const edges=new THREE.LineSegments(geometry(`home-ink:${o.geometry.uuid}`,()=>new THREE.EdgesGeometry(o.geometry,25)),inkLines);o.add(edges);const outline=new THREE.Mesh(o.geometry,inkHull);outline.scale.setScalar(1.012);o.add(outline);}
+ return g;
+}
 let photoRenderer;const photos=new Map();
 export function shopPicture(item,state){
  const key=item.id+JSON.stringify(state.avatar);if(photos.has(key))return photos.get(key);
  if(!photoRenderer){photoRenderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});photoRenderer.setSize(320,240);photoRenderer.setPixelRatio(1);}
  const scene=new THREE.Scene();scene.background=new THREE.Color(item.color);scene.add(new THREE.HemisphereLight('#fff7fc','#b4aacb',2.4));const light=new THREE.DirectionalLight('#fff7ed',2);light.position.set(-3,6,5);scene.add(light);let model;
- if(item.kind==='furniture')model=furnitureMesh(item.id);
+ if(item.kind==='house')model=houseMesh(item.value);
+ else if(item.kind==='furniture')model=furnitureMesh(item.id);
  else if(item.kind==='avatar'){const copy=structuredClone(state);copy.avatar[item.slot]=item.value;model=avatarMesh(copy);}
  else if(item.kind==='pet')model=petMesh(item.value);
  else if(item.kind==='tool'||item.kind==='upgrade')model=vacuumMesh(item.value||state.toolStyle,state.avatar.skin,item.id==='long-reach','#edbad4');
@@ -147,17 +149,25 @@ export class World3D {
   this.scenery=new THREE.Group();this.scene.add(this.scenery);this.dynamic=new THREE.Group();this.scene.add(this.dynamic);this.actors=new Map();this.resources=new Map();this.lastScene='';this.lastTool='';this.pet=null;this.petId=null;
   this.vacuum=new THREE.Group();this.camera.add(this.vacuum);this.vacuum.position.set(.36,-.34,-.65);this.vacuum.scale.setScalar(.6);
   this.suction=new THREE.Group();this.scene.add(this.suction);this.suctionDots=Array.from({length:14},()=>ball(this.suction,0,0,0,.055,.055,.055,'#fff0ff'));
-  this.pulse=0;this.resize();new ResizeObserver(()=>this.resize()).observe(canvas);
+  this.artVersion=0;this.player=null;this.avatarSignature='';window.addEventListener('wildhaven-art-ready',()=>this.artVersion++);this.pulse=0;this.resize();new ResizeObserver(()=>this.resize()).observe(canvas);
  }
  resize(){const w=this.canvas.clientWidth,h=this.canvas.clientHeight;if(!w||!h)return;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
- cameraState(state,time=0,moving=false){this.camera.position.set(wx(state.x),1.55+(moving?Math.sin(time*9)*.012:0),wz(state.y));this.camera.rotation.set(state.pitch||0,state.yaw||0,0,'YXZ');this.camera.updateMatrixWorld();}
+ cameraState(state,time=0,moving=false){
+ const x=wx(state.x),z=wz(state.y),yaw=state.yaw||0;
+ if(state.room){this.camera.position.set(0,6.6,7.7);this.camera.lookAt(0,.55,0);}
+ else {const distance=5.2;this.camera.position.set(x+Math.sin(yaw)*distance,3.6-(state.pitch||0)*2,z+Math.cos(yaw)*distance);const target=new THREE.Vector3(x,1.05,z);
+ if(state.biome==='ranch'){const direction=this.camera.position.clone().sub(target).normalize(),ray=new THREE.Ray(target,direction);for(const bounds of [[373,527,155,256,4.5],[634,736,165,255,3.5]]){const box=new THREE.Box3(new THREE.Vector3(wx(bounds[0]),0,wz(bounds[2])),new THREE.Vector3(wx(bounds[1]),bounds[4],wz(bounds[3]))),hit=ray.intersectBox(box,new THREE.Vector3());if(hit){const gap=target.distanceTo(hit);if(gap<this.camera.position.distanceTo(target))this.camera.position.copy(target).addScaledVector(direction,Math.max(.8,gap-.25));}}}
+ this.camera.lookAt(target);}
+ this.camera.updateMatrixWorld();
+ }
+
  terrain(state){
-  const signature=JSON.stringify([state.biome,state.homeLevel,state.ranchTheme,state.ranchLand,state.room,state.decor,state.owned.filter(id=>['lanterns','sofa','table','chair','planter'].includes(id))]);if(signature===this.lastScene)return;this.lastScene=signature;this.scenery.traverse(o=>{if(o.isInstancedMesh)o.dispose();});this.scenery.clear();
+  const signature=JSON.stringify([state.biome,state.homeLevel,state.houseStyle,state.ranchTheme,state.ranchLand,state.room,state.decor,state.owned.filter(id=>['lanterns','sofa','table','chair','planter'].includes(id))]);if(signature===this.lastScene)return;this.lastScene=signature;this.scenery.traverse(o=>{if(o.isInstancedMesh)o.dispose();});this.scenery.clear();
   const g=this.scenery,b=BIOMES[state.biome];
   if(state.room){this.sky.visible=false;this.interior(state);batchScenery(g);return;}this.sky.visible=true;this.scene.background.set(state.biome==='ridge'?'#e2e0f0':'#dcecf0');this.scene.fog.color.copy(this.scene.background);
   const ground=box(g,0,-.14,0,65,.25,65,state.biome==='ridge'?'#dbd0e9':'#c6dfce',.03);ground.material=paintedGround(state.biome==='ridge');if(state.biome==='ranch'&&state.ranchLand==='beach')ground.material=material('#f5dfbd');
   const path=state.biome==='ridge'?'#e5dced':'#eedcdf';box(g,0,.015,2.5,2.6,.04,25,path,.02);
-  for(let i=0;i<22;i++){const a=i/22*Math.PI*2;if(!(state.biome==='ranch'&&state.ranchLand==='beach'&&Math.cos(a)>.2))tree(g,Math.cos(a)*19,Math.sin(a)*15,state.biome==='ranch'&&state.ranchLand==='forest'?0:i,state.biome==='ridge');}
+  for(let i=0;i<22;i++){const a=i/22*Math.PI*2;if(!(state.biome==='ranch'&&state.ranchLand==='beach'&&Math.cos(a)>.2))g.add(animeTree(Math.cos(a)*19,Math.sin(a)*15,state.biome==='grove'||state.biome==='ranch'&&state.ranchLand==='forest'));}
   for(let i=0;i<90;i++){const x=((i*71)%340-170)/10,z=((i*43)%240-120)/10;if(Math.abs(x)<1.8)continue;flower(g,x,.13+i%3*.045,z,['#f3b6d5','#fff1dc','#cfbaed'][i%3],.09);}
   // Closer flower beds and a winding ribbon of individual stepping stones.
   for(let i=0;i<22;i++){const z=i*.85-9;const x=Math.sin(i*.4)*.45;const stone=cylinder(g,x,.04,z,.48,.5,.055,'#f6e5e8');stone.scale.z=.70;}
@@ -170,19 +180,10 @@ export class World3D {
   const g=this.scenery,modern=state.ranchTheme==='modern',cute=state.ranchTheme==='cute',trim=cute?'#d2b4df':modern?'#c4d9d5':'#f0dec2',roof=cute?'#e4b9d2':modern?'#b0c9c7':'#c999a0';
   const house=new THREE.Group();house.position.set(wx(450),0,wz(205));g.add(house);
   if(state.homeLevel===0){const tent=new THREE.Mesh(geometry('tent',()=>new THREE.ConeGeometry(2.5,2.8,4)),material(roof));tent.position.y=1.4;tent.rotation.y=Math.PI/4;house.add(tent);box(house,0,.65,1.45,1.0,1.3,.08,'#8e7a91',.1);if(cute)ribbon(house,0,1.85,1.25,.28);sign(house,'YOUR LITTLE HOME',0,3.2,0,3);}
-  else {
-   box(house,0,1.4,0,5.8,2.8,3.5,cute?'#f5d7e7':modern?'#efede6':'#f0dbb2',.13);
-   if(modern)box(house,0,2.93,0,6.2,.35,3.9,roof,.15);
-   else {const r=new THREE.Mesh(geometry('roof',()=>new THREE.ConeGeometry(4.2,1.6,4)),material(roof));r.position.y=3.5;r.rotation.y=Math.PI/4;r.scale.z=.73;house.add(r);}
-   box(house,0,.85,1.81,.94,1.7,.14,trim,.15);ball(house,.3,.85,1.91,.045,.045,.045,'#b78d5f');
-   for(const x of [-1.85,1.85]){box(house,x,1.55,1.81,1.04,1.05,.16,'#c4e1df',.10);box(house,x,1.55,1.92,.045,1,.04,'#fff1d2',.008);}
-   if(state.homeLevel>=2){box(house,0,.12,2.4,6.5,.22,1.5,'#dbc2a7',.1);for(const x of [-1.85,1.85]){box(house,x,.96,1.94,1.2,.22,.30,roof,.08);for(let i=0;i<4;i++)ball(house,x-.4+i*.27,1.13,1.97,.13,.13,.12,i%2?'#ecdce7':'#f5dfa5');}}
-   if(state.homeLevel>=3){box(house,1.8,3.8,-.5,.5,1.3,.5,'#dcc9bc',.08);ball(house,1.8,4.65,-.5,.22,.15,.19,'#f6f2ea');}
-   sign(house,'HOME SWEET HOME',0,4.7,0,3);
-  }
+  else {house.add(houseMesh(state.houseStyle||(state.ranchTheme==='modern'?'modern-home':state.ranchTheme==='cute'?'sakura-cottage':'forest-cabin'),state.homeLevel));sign(house,HOUSE_STYLES[state.houseStyle]?.name||'HOME SWEET HOME',0,4.9,0,3.6);}
   const shed=new THREE.Group();shed.position.set(wx(685),0,wz(210));g.add(shed);box(shed,0,1.15,0,3.65,2.3,3,'#c5d9d0',.15);box(shed,0,2.5,0,4.05,.45,3.35,'#d4b9db',.16);box(shed,-.62,.78,1.55,.85,1.56,.13,'#f0dbc0',.12);box(shed,.75,1.22,1.55,1.2,.85,.10,'#a0c8cb',.10);box(shed,.75,.70,1.77,1.5,.16,.6,'#e8d0bc',.05);sign(shed,"CREATOR'S SHED",0,3.15,.5,3.8);ball(shed,1.25,2.97,0,.2,.2,.16,'#fff0b9');
   // Storybook architectural details: scalloped awnings, shutters, lattice and flower boxes.
-  for(const [building,width,depth] of [[house,5.8,1.82],[shed,3.65,1.56]]){
+  for(const [building,width,depth] of [[shed,3.65,1.56]]){
    if(building===house&&state.homeLevel===0)continue;
    for(let k=0;k<9;k++){const x=(k-4)*width/9;const awning=box(building,x,2.16,depth+.26,width/9+.02,.07,.7,k%2?'#fff3f7':'#e5b5d0',.015);awning.rotation.x=.16;ball(building,x,2.05,depth+.60,width/18,.09,.025,k%2?'#fff3f7':'#e5b5d0');}
    for(const side of [-1,1]){const x=side*(building===house?1.85:1.15);for(const dx of [-.64,.64]){box(building,x+dx,1.52,depth+.08,.22,.95,.055,'#d0b8e4',.025);for(let j=0;j<5;j++)box(building,x+dx,1.17+j*.15,depth+.12,.19,.022,.025,'#fff1fa',.003);}box(building,x,.94,depth+.17,1.1,.18,.32,'#e3bacf',.02);for(let k=0;k<5;k++)flower(building,x-.4+k*.2,1.1,depth+.20,k%2?'#fff1de':'#e5a3c9',.10);}
@@ -202,10 +203,10 @@ export class World3D {
 
  }
  interior(state){
-  const g=this.scenery,shed=state.room==='shed';box(g,0,-.09,0,8,.18,8,'#e8cfbf');
+  const g=this.scenery,shed=state.room==='shed',palette=HOUSE_STYLES[state.houseStyle]||HOUSE_STYLES['sakura-cottage'];box(g,0,-.09,0,8,.18,8,'#e8cfbf');
   for(let i=0;i<16;i++)box(g,(i-7.5)*.5,.01,0,.017,.015,8,'#d3b6ab');
-  box(g,0,1.65,-4,8,3.3,.16,shed?'#e1d4ed':'#f6dfe7');for(const x of [-4,4])box(g,x,1.65,0,.16,3.3,8,'#f6e8ef');box(g,0,3.35,0,8,.12,8,'#fff3e8');
-  box(g,0,1.65,4,8,3.3,.16,'#e5d5e8');box(g,0,1.05,3.89,1.2,2.1,.06,'#cba9cd');sign(g,'EXIT TO RANCH',0,2.55,3.8,2);
+  box(g,0,1.65,-4,8,3.3,.16,shed?'#e1d4ed':palette.wall);for(const x of [-4,4])box(g,x,1.65,0,.16,3.3,8,'#f6e8ef');
+  box(g,0,.015,3.6,1.3,.035,.55,palette.trim);sign(g,'EXIT TO RANCH',0,.35,3.85,1.6);
   for(const x of [-2.4,2.4]){box(g,x,1.9,-3.88,1.7,1.5,.06,'#a9d8ea');box(g,x,1.9,-3.81,.05,1.5,.04,'#fff7ea');box(g,x,1.9,-3.81,1.7,.05,.04,'#fff7ea');for(const side of [-1,1])box(g,x+side*.88,1.9,-3.75,.24,1.75,.08,'#d4b8e5');}
   cylinder(g,0,.025,0,1.7,1.7,.035,shed?'#d4bee8':'#f0bed7');
   if(shed){box(g,0,.52,-3.3,1.8,1,.6,'#cdb5db');sign(g,'CREATOR’S ROOM',0,2.9,-3.7,2.7);}
@@ -214,13 +215,7 @@ export class World3D {
  }
  blocked(x,y,state){if(state.room){if(x<395||x>565||y<205||y>380)return true;return Object.values(state.decor||{}).some(p=>p.room===state.room&&Math.hypot(wx(x)-SPOTS[p.spot][0],wz(y)-SPOTS[p.spot][1])<.7);}if(state.biome!=='ranch')return false;return (x>373&&x<527&&y>155&&y<256)||(x>634&&x<736&&y>165&&y<255);}
  candidates(state,wild,residents,nodes,clock){return state.biome==='ranch'?[...residents.values()].map(o=>({type:'resident',object:o})):[...wild.filter(c=>c.wait<=clock).map(o=>({type:'creature',object:o})),...nodes.filter(n=>n.ready<=clock).map(o=>({type:'material',object:o}))];}
- aim(state,items){
-  this.cameraState(state);let best=null,bestScore=Infinity;
-  for(const item of items){const o=item.object,info=creatureInfo(o.species),v=new THREE.Vector3(wx(o.x),info?.giant?.9:.45,wz(o.y));const distance=Math.hypot(o.x-state.x,o.y-state.y);v.project(this.camera);
-   if(v.z>1||v.z<0||Math.abs(v.x)>.34||Math.abs(v.y)>.45)continue;
-   const score=Math.hypot(v.x,v.y)*180+distance*.1;if(score<bestScore){best={...item,distance};bestScore=score;}
-  }return best;
- }
+ aim(state,items){let best=null;for(const item of items){const distance=Math.hypot(item.object.x-state.x,item.object.y-state.y);if(!best||distance<best.distance)best={...item,distance};}return best;}
  animateVacuum(){this.pulse=.55;}
  render(state,wild,residents,nodes,wisps,clock,dt,beam,moving){
   this.terrain(state);this.sky.position.set(wx(state.x),0,wz(state.y));this.cameraState(state,clock,moving&&!matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -253,6 +248,9 @@ export class World3D {
   if(this.pet){const px=wx(state.x)+Math.cos(state.yaw)*.95-Math.sin(state.yaw)*1.8,pz=wz(state.y)-Math.sin(state.yaw)*.95-Math.cos(state.yaw)*1.8;this.pet.position.x+=(px-this.pet.position.x)*Math.min(1,dt*3);this.pet.position.z+=(pz-this.pet.position.z)*Math.min(1,dt*3);this.pet.position.y=Math.abs(Math.sin(clock*4))*.045;this.pet.rotation.y=Math.atan2(wx(state.x)-this.pet.position.x,wz(state.y)-this.pet.position.z);}
   this.suction.visible=Boolean(beam&&clock-beam.started<beam.duration);if(this.suction.visible){const t=(clock-beam.started)/beam.duration;this.suctionDots.forEach((m,i)=>{const p=(t+i/14)%1;m.position.set(wx(beam.x)+(this.camera.position.x-wx(beam.x))*p+Math.sin(i*3+p*15)*.15,.45+(1.22-.45)*p,wz(beam.y)+(this.camera.position.z-wz(beam.y))*p);});}
   this.scenery.traverse(o=>{if(o.isSprite&&o.userData.labelWidth){const distance=o.getWorldPosition(new THREE.Vector3()).distanceTo(this.camera.position),w=Math.min(o.userData.labelWidth,distance*.35);o.scale.set(w,w/5.12,1);}});
+  this.vacuum.visible=false;
+  const avatarSig=JSON.stringify([state.avatar,state.coat,this.artVersion]);if(avatarSig!==this.avatarSignature){this.avatarSignature=avatarSig;disposeAvatar(this.player);this.player=animeAvatar(state);this.scene.add(this.player);}
+  this.player.position.set(wx(state.x),moving?Math.abs(Math.sin(clock*7))*.035:0,wz(state.y));
   this.renderer.render(this.scene,this.camera);
  }
 }

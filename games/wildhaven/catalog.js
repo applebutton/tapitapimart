@@ -5,7 +5,17 @@ export const AVATAR_OPTIONS = {
   outfit: ['overalls', 'hoodie', 'cloud-dress', 'star-hoodie', 'sugarcloud-dress'],
   accessory: ['none', 'star-clip', 'round-glasses', 'bunny-beret'],
 };
+export const HOUSE_STYLES={
+ 'sakura-cottage':{name:'Sakura cottage',wall:'#ffe2ef',roof:'#d9b4ea',trim:'#f4afce',shape:'gable'},
+ 'seaside-home':{name:'Seashell beach house',wall:'#fdf0d7',roof:'#aadadf',trim:'#95c7d3',shape:'beach'},
+ 'forest-cabin':{name:'Woodland storybook cabin',wall:'#e4d2b5',roof:'#a3c6ad',trim:'#c2aa8d',shape:'woodland'},
+ 'modern-home':{name:'Pastel modern home',wall:'#fff2f4',roof:'#cabbe2',trim:'#c1dcd8',shape:'modern'},
+};
 export const SHOP = [
+ {id:'sakura-cottage',category:'Houses',name:'Sakura cottage',price:45,kind:'house',value:'sakura-cottage',icon:'⌂',color:'#f1c8e1',description:'An entire pink cottage with a lavender roof. Includes a room to enter and decorate.'},
+ {id:'seaside-home',category:'Houses',name:'Seashell beach house',price:45,kind:'house',value:'seaside-home',icon:'⌂',color:'#b9dfe4',description:'A raised seaside home with a mint roof and porch. Includes a decoratable interior.'},
+ {id:'forest-cabin',category:'Houses',name:'Woodland storybook cabin',price:40,kind:'house',value:'forest-cabin',icon:'⌂',color:'#cbdcbd',description:'A timber cabin with a green roof and chimney. Make its interior your own.'},
+ {id:'modern-home',category:'Houses',name:'Pastel modern home',price:50,kind:'house',value:'modern-home',icon:'⌂',color:'#dbd0ed',description:'A cream and lilac home with a flat roof and wide windows. Includes a decoratable interior.'},
   { id:'cloud-dress', category:'Avatar', name:'Cloud dress', price:14, kind:'avatar', slot:'outfit', value:'cloud-dress', icon:'☁', color:'#c9d8ee', description:'A soft sky-blue dress for your wanderer.' },
   { id:'star-hoodie', category:'Avatar', name:'Star hoodie', price:16, kind:'avatar', slot:'outfit', value:'star-hoodie', icon:'★', color:'#e6c9df', description:'A rosy hoodie with a little golden star.' },
   { id:'space-buns', category:'Avatar', name:'Double-bun hair', price:10, kind:'avatar', slot:'hair', value:'space-buns', icon:'●', color:'#bb967d', description:'Two fluffy round buns. Pick any hair color.' },

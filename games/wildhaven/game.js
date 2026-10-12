@@ -1,6 +1,8 @@
 import {LANDS,ROOMS,SPOTS,enterRoom,leaveRoom,setLand,placeFurniture} from './housing.js';
-import { World2D, AvatarPreview, shopPicture, drawFriend } from './world2d.js';
-import { SHOP, AVATAR_OPTIONS, SKU } from './catalog.js';
+import { World3D, shopPicture as housePicture } from './world3d.js';
+import { AvatarPreview, shopPicture as illustratedPicture, drawFriend } from './world2d.js';
+const shopPicture=(item,state)=>item.kind==='house'?housePicture(item,state):illustratedPicture(item,state);
+import { SHOP, AVATAR_OPTIONS, SKU, HOUSE_STYLES } from './catalog.js';
 import { SPECIES, BIOMES, WIDTH, HEIGHT, LIMIT, MATERIALS, PENS, HOME_STAGES, creatureInfo, countCarried, collectMaterial, releaseCreature, vacuumResident, combineCreatures, buildHome, penBounds, wander, freshState, loadState, catchCreature, careFor, tradeTreats, travel, takeHit, setAvatar, avatarAllowed, purchase, vacuumRange, vacuumDelay } from './engine.js';
 
 const SAVE_KEY = 'tapitapimart-wildhaven-v1';
@@ -8,9 +10,9 @@ let state;
 try { state = loadState(localStorage.getItem(SAVE_KEY)); } catch { state = freshState(); }
 const canvas = document.querySelector('#world');
 let world, preview;
-try { world = new World2D(canvas); } catch(error) {
+try { world = new World3D(canvas); if(world.blocked(state.x,state.y,state)){if(state.room){state.x=480;state.y=370;}else if(state.biome==='ranch')leaveRoom(state);} } catch(error) {
   document.querySelector('#graphics-error').hidden=false;
-  document.querySelector('#graphics-error').textContent='The illustrated world needs canvas support. Please try a current browser.';
+  document.querySelector('#graphics-error').textContent='This illustrated 3D world needs WebGL 2. Please open it in a browser with graphics acceleration.';
   console.error('Wildhaven canvas could not start',error);
 }
 const $ = selector => document.querySelector(selector);
@@ -23,7 +25,7 @@ function save() {
   state.lastSaved = Date.now();
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); saveOkay = true; }
   catch { saveOkay = false; }
-  $('#save-status').textContent = saveOkay ? 'Saved on this device · v11' : 'Saving unavailable · keep this tab open';
+  $('#save-status').textContent = saveOkay ? 'Saved on this device · v12' : 'Saving unavailable · keep this tab open';
 }
 function announce(message) { $('#message').textContent = message; if($('#inventory').open)$('#inventory-message').textContent=message;if($('#shed-dialog').open)$('#shop-message').textContent=message;if($('#avatar-dialog').open)$('#avatar-message').textContent=message; }
 function scatter(x, y, color, count = 14) {
@@ -85,8 +87,8 @@ function renderShop(){
   for(const card of $('#shop-items').children)card.hidden=!chosen.some(item=>item.id===card.dataset.sku);
   for(const item of chosen){let card=$(`[data-sku="${item.id}"]`);
     if(!card){card=document.createElement('article');card.className='shop-card';card.dataset.sku=item.id;card.innerHTML=`<div class="shop-art" style="--item-color:${item.color}"><img alt="${item.name} preview" loading="lazy"></div><h3>${item.name}</h3><p>${item.description}</p><button data-buy="${item.id}"></button>`;try{card.querySelector('img').src=shopPicture(item,state);}catch{card.querySelector('img').alt=`${item.name} preview unavailable`;}card.querySelector('button').addEventListener('click',()=>{const result=purchase(state,item.id);announce(result.message);if(result.ok){renderUI();save();}else renderShop();$('#shop-message').textContent=result.message;});const view=document.createElement('button');view.dataset.viewPurchase=item.id;view.textContent='See at ranch';view.addEventListener('click',()=>{showPurchase(item.id);});card.append(view);$('#shop-items').append(card);}
-    const owned=state.owned.includes(item.id),button=card.querySelector('button');card.querySelector('[data-view-purchase]').hidden=!owned||!['furniture','theme'].includes(item.kind);
-    const equipped=(item.kind==='avatar'&&state.avatar[item.slot]===item.value)||(item.kind==='theme'&&state.ranchTheme===item.value)||(item.kind==='tool'&&state.toolStyle===item.value)||(item.kind==='pet'&&state.pet===item.value)||(['upgrade','furniture'].includes(item.kind)&&owned);
+    const owned=state.owned.includes(item.id),button=card.querySelector('button');card.querySelector('[data-view-purchase]').hidden=!owned||!['furniture','theme','house'].includes(item.kind);
+    const equipped=(item.kind==='avatar'&&state.avatar[item.slot]===item.value)||(item.kind==='theme'&&state.ranchTheme===item.value)||(item.kind==='house'&&state.houseStyle===item.value)||(item.kind==='tool'&&state.toolStyle===item.value)||(item.kind==='pet'&&state.pet===item.value)||(['upgrade','furniture'].includes(item.kind)&&owned);
     const full=item.kind==='supply'&&state.materials[item.material]+item.amount>LIMIT;
     button.textContent=owned?(equipped?'Owned · in use':'Use this'):full?'Inventory full':`Buy · ${item.price} ✧`;
     button.disabled=equipped||full||(!owned&&state.gems<item.price);
@@ -127,7 +129,7 @@ function vacuumEffect(object) {
 }
 function updateWorkshop() {
   const levelNames=['Your little campsite','Your cozy cabin','Your flower porch','Your dream cottage'];
-  $('#home-name').textContent=levelNames[state.homeLevel];
+  $('#home-name').textContent=HOUSE_STYLES[state.houseStyle]?.name||levelNames[state.homeLevel];
   const stage=HOME_STAGES[state.homeLevel];
   $('#build-description').textContent=stage ? stage.description : 'A lovely place to come home to. Keep exploring and filling your pens!';
   $('#build-cost').textContent=stage ? `${state.materials.wood} / ${stage.wood} wood + ${state.materials.stone} / ${stage.stone} moonstones` : 'Your house is built. Go inside to decorate your rooms.';
@@ -188,7 +190,7 @@ function renderUI() {
   document.querySelectorAll('[data-pen]').forEach(b=>{const pen=Number(b.dataset.pen);b.setAttribute('aria-pressed',pen===selectedPen);b.querySelector('span').textContent=`${state.collection.filter(c=>c.location===pen).length} friends`;});
   updateWorkshop();if($('#inventory').open)renderInventory();if($('#shed-dialog').open)renderShop();if($('#avatar-dialog').open)renderAvatar();
   $('#open-shed').disabled=state.biome!=='ranch';
-  $('#enter-cabin').disabled=state.biome!=='ranch'||!state.homeLevel;$('#enter-studio').disabled=state.biome!=='ranch';$('#decorate').disabled=state.biome!=='ranch';$('#exit-room').hidden=!state.room;$('#ranch-land').value=state.ranchLand;$('#ranch-land').disabled=state.biome!=='ranch';$('#home-help').textContent=state.biome!=='ranch'?'Come home to change your land or decorate.':!state.homeLevel?'Build your cozy cabin below to go inside. The Creator’s room is open now.':'Your rooms, decorations, and chosen land are saved automatically.';
+  $('#enter-cabin').disabled=state.biome!=='ranch'||!state.homeLevel;$('#enter-studio').disabled=state.biome!=='ranch';$('#decorate').disabled=state.biome!=='ranch';$('#exit-room').hidden=!state.room;$('#ranch-land').value=state.ranchLand;$('#ranch-land').disabled=state.biome!=='ranch';$('#home-help').textContent=state.biome!=='ranch'?'Come home to change your land or decorate.':!state.homeLevel?'Build a cabin below or buy a complete home in the Houses shop tab. The Creator’s room is open now.':'Your rooms, decorations, and chosen land are saved automatically.';
   const visible=state.collection.filter(c=>c.location===selectedPen);
   const signature = JSON.stringify([state.biome, state.materials.berries,selectedPen, state.collection.map(c => [c.id,c.location,Math.round(c.happiness), c.rewardAt <= Date.now()])]);
   if (signature === collectionSignature) return;
@@ -232,7 +234,7 @@ function tick(time){
   if(!document.hidden&&!paused&&!modalOpen()){
     clock+=dt;
     const forward=(keys.has('up')?1:0)-(keys.has('down')?1:0),strafe=(keys.has('right')?1:0)-(keys.has('left')?1:0);
-    const dx=strafe,dy=-forward;
+    const dx=state.room?strafe:-Math.sin(state.yaw)*forward+Math.cos(state.yaw)*strafe,dy=state.room?-forward:-Math.cos(state.yaw)*forward-Math.sin(state.yaw)*strafe;
     if(dx||dy){const d=Math.hypot(dx,dy),nx=Math.max(35,Math.min(WIDTH-35,state.x+dx/d*95*dt)),ny=Math.max(110,Math.min(HEIGHT-30,state.y+dy/d*95*dt));
       if(!world?.blocked(nx,state.y,state))state.x=nx;if(!world?.blocked(state.x,ny,state))state.y=ny;
     }
@@ -250,7 +252,7 @@ function tick(time){
     for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=85*dt;p.life-=dt;if(p.life<=0)particles.splice(i,1);}
     for(const c of state.collection.filter(c=>c.location!=='vacuum'))c.happiness=Math.max(25,c.happiness-dt/240);
     const close=nearest();
-    $('#world-hint').textContent=close&&close.distance<vacuumRange(state)?`✧ Vacuum ${targetName(close)}`:state.room?'Inside · decorate or go outside':state.biome==='ranch'?'Your ranch · swipe or arrows to walk':'Swipe or arrows to walk · vacuum nearby friends';
+    $('#world-hint').textContent=close&&close.distance<vacuumRange(state)?`✧ Vacuum ${targetName(close)}`:state.room?'Inside · decorate or go outside':state.biome==='ranch'?'Your ranch · drag to look · arrows to walk':'Drag to look · arrows to walk · vacuum nearby friends';
     $('#reticle').classList.toggle('ready',Boolean(close&&close.distance<vacuumRange(state)));
     $('#interact').firstChild.textContent='✧ Vacuum ';
 
@@ -263,6 +265,7 @@ const directions={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',
 window.addEventListener('keydown',event=>{
   if(modalOpen()||paused||event.target.closest('input, select, summary, a'))return;
   if(event.key.toLowerCase()==='i'){event.preventDefault();openInventory();return;}
+  if(!state.room&&event.key.toLowerCase()==='q'){state.yaw+=.15;return;}if(!state.room&&event.key.toLowerCase()==='r'){state.yaw-=.15;return;}
   if(directions[event.key]){event.preventDefault();keys.add(directions[event.key]);target=null;}
   if((event.code==='Space'&&!event.target.closest('button'))||event.key.toLowerCase()==='e'){event.preventDefault();if(!event.repeat)interact();}
 });
@@ -275,7 +278,7 @@ canvas.addEventListener('pointerdown',event=>{
 });
 canvas.addEventListener('pointermove',event=>{
   if(!lookPointer||event.pointerId!==lookPointer.id)return;
-  const scale=state.room?.18:.7,dx=Math.max(-12,Math.min(12,(event.clientX-lookPointer.x)*scale)),dy=Math.max(-12,Math.min(12,(event.clientY-lookPointer.y)*scale));const nx=Math.max(35,Math.min(WIDTH-35,state.x+dx)),ny=Math.max(110,Math.min(HEIGHT-30,state.y+dy));if(!world?.blocked(nx,state.y,state))state.x=nx;if(!world?.blocked(state.x,ny,state))state.y=ny;lookPointer.x=event.clientX;lookPointer.y=event.clientY;
+  if(!state.room){state.yaw-=(event.clientX-lookPointer.x)*.0045;state.pitch=Math.max(-.7,Math.min(.5,state.pitch-(event.clientY-lookPointer.y)*.003));}lookPointer.x=event.clientX;lookPointer.y=event.clientY;
 });
 for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,()=>{lookPointer=null;});
 document.querySelectorAll('[data-dir]').forEach(button=>{
@@ -311,7 +314,7 @@ for(const key of ['hair','outfit','accessory'])$(`#avatar-${key}`).addEventListe
 function visitRoom(room){if(enterRoom(state,room)){keys.clear();target=null;renderUI();save();announce(`Welcome to ${ROOMS[room]}. Choose Decorate to arrange your furniture.`);canvas.scrollIntoView({block:'center'});}}
 function showPurchase(id){
  const item=SKU[id];if($('#shed-dialog').open)$('#shed-dialog').close();if($('#decor-dialog').open)$('#decor-dialog').close();
- const placement=state.decor[id];if(placement){visitRoom(placement.room);state.x=480+SPOTS[placement.spot][0]/.04;state.y=Math.min(378,290+(SPOTS[placement.spot][1]+1.7)/.04);state.pitch=-.18;save();}else{leaveRoom(state);if(item.kind==='furniture'){state.x=250;state.y=350;}else{state.x=450;state.y=330;}state.yaw=0;state.pitch=-.10;renderUI();save();canvas.scrollIntoView({block:'center'});announce(item.kind==='theme'?`${item.name} is applied to your home and ranch. Themes decorate your home; build the cabin below when you are ready.`:`${item.name} is on your patio beside the house.`);}
+ const placement=state.decor[id];if(placement){visitRoom(placement.room);state.x=480+SPOTS[placement.spot][0]/.04;state.y=Math.min(378,290+(SPOTS[placement.spot][1]+1.7)/.04);state.pitch=-.18;save();}else{leaveRoom(state);if(item.kind==='furniture'){state.x=250;state.y=350;}else{state.x=450;state.y=330;}state.yaw=0;state.pitch=-.10;renderUI();save();canvas.scrollIntoView({block:'center'});announce(item.kind==='theme'?`${item.name} is applied to your home and ranch. Themes decorate your home; build the cabin below when you are ready.`:item.kind==='house'?`${item.name} is your active home. Choose Enter cabin to decorate inside.`:`${item.name} is on your patio beside the house.`);}
 }
 function renderDecor(){
  const container=$('#decor-items');container.replaceChildren();const owned=SHOP.filter(i=>i.kind==='furniture'&&state.owned.includes(i.id));

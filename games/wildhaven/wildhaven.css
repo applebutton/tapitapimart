@@ -33,3 +33,6 @@ dialog{background:#fffaff;border:3px solid #dcc5ef;border-radius:26px;box-shadow
 
 /* The adventure is now an illustrated 2D canvas. */
 #reticle{display:none}.viewport #world{height:auto!important;min-height:0!important;aspect-ratio:960/580;cursor:default}.world-panel,.panel,.workshop-card,.collection-panel,dialog{border-color:#765471}.avatar-stage canvas{height:300px;object-fit:contain}.world-hint{top:8px;max-width:88%;font-size:11px;border:1px solid #765471}.shop-art img{image-rendering:auto}@media(max-width:760px){.world-hint{font-size:9px;padding:5px 8px}.viewport{overflow:hidden}.viewport #world{min-height:0!important;object-fit:contain}}
+
+/* A dimensional world with the same illustrated anime artwork. */
+.viewport #world{height:540px!important;min-height:0!important;aspect-ratio:auto;object-fit:fill;cursor:grab}.viewport #world:active{cursor:grabbing}@media(max-width:760px){.viewport #world{height:400px!important}}

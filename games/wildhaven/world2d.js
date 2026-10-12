@@ -126,3 +126,6 @@ export function shopPicture(item,state){
  else for(let i=0;i<3;i++)shape(c,item.color,()=>{const x=110+i*50;c.moveTo(x-19,170);c.lineTo(x-24,110);c.lineTo(x,66);c.lineTo(x+24,110);c.lineTo(x+19,170);c.closePath();});
  const url=canvas.toDataURL();photoCache.set(key,url);return url;
 }
+
+// Shared illustrated artwork for the 3D scene and wardrobe.
+export function avatarCanvas(state){const canvas=document.createElement('canvas');canvas.width=320;canvas.height=480;drawAvatar(canvas.getContext('2d'),state,160,478,476);return canvas;}

@@ -45,7 +45,7 @@ export function creatureInfo(type) {
   return { ...first, name: `Giant ${starts[a]}${ends[b]}`, accent: second.color, giant: true, genes: [a, b], note: `A big, bouncy blend of ${first.name} and ${second.name}.` };
 }
 export function freshState(now = Date.now()) {
-  return { version: 3, room:null, ranchLand:'sakura', decor:{}, sugarcloudEquipped: true, owned: [], avatar: {skin:'#e7b98e',hairColor:'#efa0bd',hair:'sugarcloud-waves',outfit:'sugarcloud-dress',accessory:'bunny-beret'}, toolStyle:'mint', ranchTheme:'woodland', pet:null, yaw:0, pitch:-.14, gems: 0, materials: { berries: 8, wood: 0, stone: 0, metal:0, starfood:0 }, collection: [], homeLevel: 0, biome: 'meadow', x: 480, y: 400, health: 3, coat: '#dd846a', lastSaved: now, nextId: 1 };
+  return { version: 3, room:null, houseStyle:null, ranchLand:'sakura', decor:{}, sugarcloudEquipped: true, owned: [], avatar: {skin:'#e7b98e',hairColor:'#efa0bd',hair:'sugarcloud-waves',outfit:'sugarcloud-dress',accessory:'bunny-beret'}, toolStyle:'mint', ranchTheme:'woodland', pet:null, yaw:0, pitch:-.14, gems: 0, materials: { berries: 8, wood: 0, stone: 0, metal:0, starfood:0 }, collection: [], homeLevel: 0, biome: 'meadow', x: 480, y: 400, health: 3, coat: '#dd846a', lastSaved: now, nextId: 1 };
 }
 const clamp = (v, min, max, fallback) => Number.isFinite(v) ? Math.max(min, Math.min(max, v)) : fallback;
 export function loadState(raw, now = Date.now()) {
@@ -199,7 +199,7 @@ export function purchase(state,id) {
   state.gems-=item.price;
   if(item.kind==='supply')state.materials[item.material]+=item.amount;
   else {state.owned.push(id);equipPurchase(state,id);}
-  return {ok:true,message:`${item.name} is yours!${item.kind==='furniture'?' It is already placed beside your home.':''}`};
+  return {ok:true,message:`${item.name} is yours!${item.kind==='furniture'?' It is already placed beside your home.':item.kind==='house'?' Your home is ready. Choose Enter cabin to decorate inside.':''}`};
 }
 export function equipPurchase(state,id) {
   const item=Object.hasOwn(SKU,id)?SKU[id]:null;if(!item||!state.owned.includes(id))return {ok:false,message:'Buy this item first.'};
@@ -207,6 +207,7 @@ export function equipPurchase(state,id) {
   if(item.kind==='tool')state.toolStyle=item.value;
   if(item.kind==='theme')state.ranchTheme=item.value;
   if(item.kind==='pet')state.pet=item.value;
+  if(item.kind==='house'){state.houseStyle=item.value;state.homeLevel=Math.max(1,state.homeLevel);}
   return {ok:true,message:`${item.name} is ready!`};
 }
 export function vacuumRange(state) {return state.owned.includes('long-reach')?160:110;}

@@ -1,4 +1,4 @@
-import {SKU} from './catalog.js';
+import {SKU,HOUSE_STYLES} from './catalog.js';
 export const LANDS={beach:'Seashell Beach',forest:'Whispering Forest',sakura:'Cherry Blossom Forest'};
 export const ROOMS={cabin:'Your cabin',shed:'Creator’s room'};
 export const SPOTS=[[-2.4,-2.4],[0,-2.4],[2.4,-2.4],[-2.4,0],[2.4,0],[-2.4,2.2],[2.4,2.2]];
@@ -13,6 +13,7 @@ export function placeFurniture(s,id,room,spot,rotation=0){
  s.decor[id]={room,spot,rotation};return true;
 }
 export function restoreHousing(s,raw){
+ s.houseStyle=Object.hasOwn(HOUSE_STYLES,raw.houseStyle)&&s.owned.includes(raw.houseStyle)?raw.houseStyle:null;if(s.houseStyle)s.homeLevel=Math.max(1,s.homeLevel);
  s.ranchLand=Object.hasOwn(LANDS,raw.ranchLand)?raw.ranchLand:'sakura';s.decor={};
  if(raw.decor&&typeof raw.decor==='object')for(const [id,p] of Object.entries(raw.decor))if(p&&s.owned.includes(id)&&SKU[id]?.kind==='furniture'&&Object.hasOwn(ROOMS,p.room)&&(p.room!=='cabin'||s.homeLevel)&&Number.isInteger(p.spot)&&SPOTS[p.spot]&&!Object.values(s.decor).some(v=>v.room===p.room&&v.spot===p.spot))s.decor[id]={room:p.room,spot:p.spot,rotation:Number.isInteger(p.rotation)&&p.rotation>=0&&p.rotation<4?p.rotation:0};
  s.room=s.biome==='ranch'&&Object.hasOwn(ROOMS,raw.room)&&(raw.room!=='cabin'||s.homeLevel)?raw.room:null;
