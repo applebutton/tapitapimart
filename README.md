@@ -43,4 +43,6 @@ In repository Settings → Pages, select **Deploy from a branch**, then **main**
 
 The expected URL is https://applebutton.github.io/tapitapimart/. All asset paths, the manifest, and the service worker support this repository subpath. Free GitHub Pages requires a public repository on GitHub Free; do not change repository visibility without reviewing what will become public.
 
-Wildhaven v13 uses first-person eye-level viewing indoors and outside. Drag/swipe to look, WASD/arrows to move, Q/R to turn. Rounded scenery, houses, furniture, supplies, and tools share cel shading and dark silhouettes. The wardrobe combines matching illustrated heads and eight outfits, including Blossom tea dress, Ivory rose lace, and Bluebell ribbon mage in the Creator’s Shed. High-density canvases and unblurred dialogs keep artwork sharp.
+Wildhaven v14 uses first-person eye-level viewing indoors and outside. Drag/swipe to look, WASD/arrows to move, Q/R to turn. Rounded scenery, houses, furniture, supplies, and tools share soft cel shading and rounded forms without black outlines. The wardrobe combines matching illustrated heads and eight outfits, including Blossom tea dress, Ivory rose lace, and Bluebell ribbon mage in the Creator’s Shed. High-density canvases and unblurred dialogs keep artwork sharp.
+
+The v14 wardrobe uses taller anime proportions and layers long hair behind every outfit, with the face and bangs in front. The illustrated creatures, scenery, clothing, and accessories use colored shading instead of black contour lines.

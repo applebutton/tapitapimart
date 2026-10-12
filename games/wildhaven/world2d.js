@@ -1,15 +1,15 @@
 import {AVATAR_OPTIONS} from './catalog.js';
 import {BIOMES,PENS,creatureInfo} from './engine.js';
 import {SPOTS} from './housing.js';
-const ink='#241c2d';
+const ink='#997b9f';
 function load(name){const img=new Image();img.onload=()=>window.dispatchEvent(new Event('wildhaven-art-ready'));img.src=new URL(name,import.meta.url).href;return img;}
 const environment=load('./anime-environment.png');
 const accessories=load('./anime-accessories.png');
 const outfits=load('./anime-outfits.png'),heads=load('./anime-heads.png');
-const hero=load('./anime-avatar.png'),creatures=load('./anime-creatures.png'),sky=load('./anime-sky.png');
+const creatures=load('./anime-creatures.png'),sky=load('./anime-sky.png');
 function ready(img){return img.complete&&img.naturalWidth>0;}
-function shape(c,fill,draw,width=2.3){c.beginPath();draw();c.fillStyle=fill;c.fill();c.strokeStyle=ink;c.lineWidth=width;c.lineJoin='round';c.stroke();}
-function oval(c,x,y,rx,ry,fill,line=true){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(line){c.strokeStyle=ink;c.lineWidth=2;c.stroke();}}
+function shape(c,fill,draw,width=2.3){c.beginPath();draw();c.fillStyle=fill;c.fill();}
+function oval(c,x,y,rx,ry,fill,line=true){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();}
 function rect(c,x,y,w,h,fill,r=5){shape(c,fill,()=>c.roundRect(x,y,w,h,r));}
 function line(c,points,color=ink,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.stroke();}
 function text(c,str,x,y,size=14){c.font=`bold ${size}px "Trebuchet MS", sans-serif`;c.textAlign='center';c.fillStyle=ink;c.fillText(str,x,y);}
@@ -48,12 +48,16 @@ function drawAvatar(c,state,x,y,height=116){
  if(!ready(outfits)||!ready(heads)){text(c,'Loading your anime avatar…',x,y,12);return;}
  const a=state.avatar,body=dollLayer(outfits,Math.max(0,AVATAR_OPTIONS.outfit.indexOf(a.outfit)),4,a),head=dollLayer(heads,Math.max(0,AVATAR_OPTIONS.hair.indexOf(a.hair)),3,a,true);
  c.save();c.translate(x,y-height);c.scale(height/300,height/300);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
- // The head overlaps the neck, keeping the same face with every outfit.
- c.drawImage(body,-79,88,158,211);const hr=headRects[Math.max(0,AVATAR_OPTIONS.hair.indexOf(a.hair))];c.drawImage(head,-hr[4]*.23,94-hr[5]*.23,head.width*.23,head.height*.23);
+ // Longer body and smaller head give the same avatar taller anime proportions.
+ // Paint the whole hair silhouette behind clothes, then only the face/bangs in front.
+ const hr=headRects[Math.max(0,AVATAR_OPTIONS.hair.indexOf(a.hair))],hx=-hr[4]*.19,hy=80-hr[5]*.19,hw=head.width*.19,hh=head.height*.19;
+ c.drawImage(head,hx,hy,hw,hh);
+ c.drawImage(body,-72,74,144,225);
+ c.save();c.beginPath();c.rect(-100,0,200,82);c.clip();c.drawImage(head,hx,hy,hw,hh);c.restore();
  if(ready(accessories)){
-  if(a.accessory==='bunny-beret')c.drawImage(accessories,0,0,920,724,-66,-5,132,104);
-  if(a.accessory==='round-glasses')c.drawImage(accessories,920,210,760,310,-41,52,82,33);
-  if(a.accessory==='star-clip')c.drawImage(accessories,1730,190,442,430,27,22,29,28);
+  if(a.accessory==='bunny-beret')c.drawImage(accessories,0,0,920,724,-55,-3,110,87);
+  if(a.accessory==='round-glasses')c.drawImage(accessories,920,210,760,310,-34,46,68,27);
+  if(a.accessory==='star-clip')c.drawImage(accessories,1730,190,442,430,22,19,24,23);
  }
  c.restore();
 }
@@ -110,7 +114,7 @@ export class AvatarPreview {
 }
 const photoCache=new Map();
 export function shopPicture(item,state){
- const key=item.id+JSON.stringify(state.avatar)+(ready(heads)&&ready(outfits)?'d':'')+(ready(accessories)?'a':'')+(ready(hero)?'h':'')+(ready(creatures)?'c':'')+(ready(environment)?'e':'');if(photoCache.has(key))return photoCache.get(key);
+ const key=item.id+JSON.stringify(state.avatar)+(ready(heads)&&ready(outfits)?'d':'')+(ready(accessories)?'a':'')+(ready(creatures)?'c':'')+(ready(environment)?'e':'');if(photoCache.has(key))return photoCache.get(key);
  const canvas=document.createElement('canvas');canvas.width=640;canvas.height=480;const c=canvas.getContext('2d');c.scale(2,2);c.fillStyle=item.color;c.fillRect(0,0,320,240);
  if(item.kind==='furniture')drawFurniture(c,item.id,160,130,2);
  else if(item.kind==='avatar'){const copy=structuredClone(state);copy.avatar[item.slot]=item.value;drawAvatar(c,copy,160,235,230);}

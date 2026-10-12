@@ -5,5 +5,5 @@ function texture(file,index=null){const key=file+index;if(textures.has(key))retu
 function card(map,width,height){const s=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,alphaTest:.12,depthWrite:true,toneMapped:false}));s.center.set(.5,0);s.scale.set(width,height,1);return s;}
 export function animeCreature(type){const giant=typeof type==='string',index=giant?Number(type.split('-')[1]):type;return card(texture('./anime-creatures.png',index),giant?1.9:1.1,giant?1.9:1.1);}
 export function animeTree(x,z,forest=false){const s=card(texture('./anime-environment.png',forest?3:2),4.5,4.5);s.position.set(x,0,z);return s;}
-export function animeAvatar(state){const map=new THREE.CanvasTexture(avatarCanvas(state));map.colorSpace=THREE.SRGBColorSpace;const s=card(map,1.5,2.25);s.userData.ownTexture=true;return s;}
+export function animeAvatar(state){const map=new THREE.CanvasTexture(avatarCanvas(state));map.colorSpace=THREE.SRGBColorSpace;const s=card(map,1.35,2.55);s.userData.ownTexture=true;return s;}
 export function disposeAvatar(s){if(!s)return;s.material.map.dispose();s.material.dispose();s.removeFromParent();}
