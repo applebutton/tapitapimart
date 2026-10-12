@@ -6,9 +6,15 @@ Choose Easy for random moves, Medium for immediate wins and blocks, or Hard for 
 
 ## Wildhaven
 
-Open `games/wildhaven/`, or choose Wildhaven on the game shelf. Explore three biomes, catch six kinds of magical creatures, and care for them at your ranch. Move with WASD / arrow keys, the on-screen direction buttons, or a tap on the map. Space / E or Catch / gather befriends a nearby creature or gathers berries. Each catch earns 3 stardust; happy ranch companions give 8-stardust gifts at one-minute intervals. Petting is free, and berries regrow in the wild, so supplies never block play.
+Open `games/wildhaven/`, or choose Wildhaven on the game shelf. A cute, open-ended survival adventure: explore three biomes with a magical vacuum, collect six small creature species and wild giants, gather berries/wood/moonstones, and build a home at your ranch.
 
-Purple wisps cause bumps. Three hits respawn you at the ranch with full hearts and all companions and rewards intact. There is no win or lose state. Device-local progress is saved automatically; it does not sync across devices. Clearing browser storage removes the save. The game works offline after its assets have been cached. No account, backend, external artwork, or runtime dependencies are required.
+Move with WASD / arrow keys, the on-screen direction buttons, or a tap on the map. Space / E or **Vacuum** collects the nearest creature or material within reach. **Inventory** (or I) shows everything carried, capped at 30 of each material and creature type. Inventory pauses exploration while open. Stardust is a separate reward currency.
+
+At the ranch, choose a pen in Inventory and **Put into pen**. Three fully enclosed pens contain autonomous wandering creatures. Only vacuuming moves them back into inventory; full inventory slots leave penned creatures untouched. Feed and pet penned friends for happiness and gifts. Petting is free; resources regrow, so supplies never block play.
+
+Combine any two small carried creatures (including two of the same species) into one giant at the ranch. The preview names the result before combining; there are 21 possible giant combinations. Giants can be carried and placed in pens just like small creatures. Wood and moonstones build three permanent home stages: a cozy cabin, flower porch, and dream cottage.
+
+Purple wisps cause bumps. Three hits respawn you at the ranch with full hearts and all inventory, penned creatures, home upgrades, and rewards intact. There is no win or lose state. Progress saves automatically on this device and works offline after assets are cached. Saves do not sync across devices; clearing browser storage removes them. Earlier Wildhaven saves migrate companions into pens and preserve their cabin and rewards. No account, backend, external artwork, or runtime dependencies are required.
 
 ## Develop
 
