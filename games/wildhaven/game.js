@@ -1,7 +1,7 @@
 import {LANDS,ROOMS,SPOTS,enterRoom,leaveRoom,setLand,placeFurniture} from './housing.js';
 import { World3D, shopPicture as housePicture } from './world3d.js';
 import { AvatarPreview, shopPicture as illustratedPicture, drawFriend } from './world2d.js';
-const shopPicture=(item,state)=>item.kind==='house'?housePicture(item,state):illustratedPicture(item,state);
+const shopPicture=(item,state)=>item.kind==='avatar'||item.kind==='pet'?illustratedPicture(item,state):housePicture(item,state);
 import { SHOP, AVATAR_OPTIONS, SKU, HOUSE_STYLES } from './catalog.js';
 import { SPECIES, BIOMES, WIDTH, HEIGHT, LIMIT, MATERIALS, PENS, HOME_STAGES, creatureInfo, countCarried, collectMaterial, releaseCreature, vacuumResident, combineCreatures, buildHome, penBounds, wander, freshState, loadState, catchCreature, careFor, tradeTreats, travel, takeHit, setAvatar, avatarAllowed, purchase, vacuumRange, vacuumDelay } from './engine.js';
 
@@ -25,7 +25,7 @@ function save() {
   state.lastSaved = Date.now();
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); saveOkay = true; }
   catch { saveOkay = false; }
-  $('#save-status').textContent = saveOkay ? 'Saved on this device · v12' : 'Saving unavailable · keep this tab open';
+  $('#save-status').textContent = saveOkay ? 'Saved on this device · v13' : 'Saving unavailable · keep this tab open';
 }
 function announce(message) { $('#message').textContent = message; if($('#inventory').open)$('#inventory-message').textContent=message;if($('#shed-dialog').open)$('#shop-message').textContent=message;if($('#avatar-dialog').open)$('#avatar-message').textContent=message; }
 function scatter(x, y, color, count = 14) {
@@ -234,7 +234,7 @@ function tick(time){
   if(!document.hidden&&!paused&&!modalOpen()){
     clock+=dt;
     const forward=(keys.has('up')?1:0)-(keys.has('down')?1:0),strafe=(keys.has('right')?1:0)-(keys.has('left')?1:0);
-    const dx=state.room?strafe:-Math.sin(state.yaw)*forward+Math.cos(state.yaw)*strafe,dy=state.room?-forward:-Math.cos(state.yaw)*forward-Math.sin(state.yaw)*strafe;
+    const dx=-Math.sin(state.yaw)*forward+Math.cos(state.yaw)*strafe,dy=-Math.cos(state.yaw)*forward-Math.sin(state.yaw)*strafe;
     if(dx||dy){const d=Math.hypot(dx,dy),nx=Math.max(35,Math.min(WIDTH-35,state.x+dx/d*95*dt)),ny=Math.max(110,Math.min(HEIGHT-30,state.y+dy/d*95*dt));
       if(!world?.blocked(nx,state.y,state))state.x=nx;if(!world?.blocked(state.x,ny,state))state.y=ny;
     }
@@ -252,7 +252,7 @@ function tick(time){
     for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=85*dt;p.life-=dt;if(p.life<=0)particles.splice(i,1);}
     for(const c of state.collection.filter(c=>c.location!=='vacuum'))c.happiness=Math.max(25,c.happiness-dt/240);
     const close=nearest();
-    $('#world-hint').textContent=close&&close.distance<vacuumRange(state)?`✧ Vacuum ${targetName(close)}`:state.room?'Inside · decorate or go outside':state.biome==='ranch'?'Your ranch · drag to look · arrows to walk':'Drag to look · arrows to walk · vacuum nearby friends';
+    $('#world-hint').textContent=close&&close.distance<vacuumRange(state)?`✧ Vacuum ${targetName(close)}`:state.room?'Inside · drag to look · arrows to walk':state.biome==='ranch'?'Your ranch · drag to look · arrows to walk':'Drag to look · arrows to walk · vacuum nearby friends';
     $('#reticle').classList.toggle('ready',Boolean(close&&close.distance<vacuumRange(state)));
     $('#interact').firstChild.textContent='✧ Vacuum ';
 
@@ -265,7 +265,7 @@ const directions={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',
 window.addEventListener('keydown',event=>{
   if(modalOpen()||paused||event.target.closest('input, select, summary, a'))return;
   if(event.key.toLowerCase()==='i'){event.preventDefault();openInventory();return;}
-  if(!state.room&&event.key.toLowerCase()==='q'){state.yaw+=.15;return;}if(!state.room&&event.key.toLowerCase()==='r'){state.yaw-=.15;return;}
+  if(event.key.toLowerCase()==='q'){state.yaw+=.15;return;}if(event.key.toLowerCase()==='r'){state.yaw-=.15;return;}
   if(directions[event.key]){event.preventDefault();keys.add(directions[event.key]);target=null;}
   if((event.code==='Space'&&!event.target.closest('button'))||event.key.toLowerCase()==='e'){event.preventDefault();if(!event.repeat)interact();}
 });
@@ -278,7 +278,7 @@ canvas.addEventListener('pointerdown',event=>{
 });
 canvas.addEventListener('pointermove',event=>{
   if(!lookPointer||event.pointerId!==lookPointer.id)return;
-  if(!state.room){state.yaw-=(event.clientX-lookPointer.x)*.0045;state.pitch=Math.max(-.7,Math.min(.5,state.pitch-(event.clientY-lookPointer.y)*.003));}lookPointer.x=event.clientX;lookPointer.y=event.clientY;
+  {state.yaw-=(event.clientX-lookPointer.x)*.0045;state.pitch=Math.max(-.7,Math.min(.5,state.pitch-(event.clientY-lookPointer.y)*.003));}lookPointer.x=event.clientX;lookPointer.y=event.clientY;
 });
 for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,()=>{lookPointer=null;});
 document.querySelectorAll('[data-dir]').forEach(button=>{

@@ -2,9 +2,10 @@ export const AVATAR_OPTIONS = {
   skin: ['#f5d8bb', '#e7b98e', '#ce936c', '#aa7250', '#805239', '#543929'],
   hairColor: ['#3e302e', '#79523b', '#c39458', '#e8cc8d', '#c58da8', '#efa0bd', '#8b80b0'],
   hair: ['bob', 'curls', 'ponytail', 'space-buns', 'sugarcloud-waves'],
-  outfit: ['overalls', 'hoodie', 'cloud-dress', 'star-hoodie', 'sugarcloud-dress'],
+  outfit: ['overalls', 'hoodie', 'cloud-dress', 'star-hoodie', 'sugarcloud-dress', 'blossom-tea', 'ivory-lace', 'ribbon-mage'],
   accessory: ['none', 'star-clip', 'round-glasses', 'bunny-beret'],
 };
+export const OUTFIT_COLORS={'overalls':'#a9c1a3','hoodie':'#edafcc','cloud-dress':'#bcd7ef','star-hoodie':'#c6a9e5','sugarcloud-dress':'#dbb7ed','blossom-tea':'#f2b1d2','ivory-lace':'#fff0e1','ribbon-mage':'#b6bce9'};
 export const HOUSE_STYLES={
  'sakura-cottage':{name:'Sakura cottage',wall:'#ffe2ef',roof:'#d9b4ea',trim:'#f4afce',shape:'gable'},
  'seaside-home':{name:'Seashell beach house',wall:'#fdf0d7',roof:'#aadadf',trim:'#95c7d3',shape:'beach'},
@@ -12,6 +13,9 @@ export const HOUSE_STYLES={
  'modern-home':{name:'Pastel modern home',wall:'#fff2f4',roof:'#cabbe2',trim:'#c1dcd8',shape:'modern'},
 };
 export const SHOP = [
+ {id:'blossom-tea',category:'Avatar',name:'Blossom tea dress',price:18,kind:'avatar',slot:'outfit',value:'blossom-tea',icon:'♡',color:'#f2c4df',description:'Pink and lavender ruffles, puff sleeves, and big ribbon bows. Illustrated in our shared anime style.'},
+ {id:'ivory-lace',category:'Avatar',name:'Ivory rose lace',price:18,kind:'avatar',slot:'outfit',value:'ivory-lace',icon:'❀',color:'#f5e6db',description:'An ivory tea dress with rose embroidery, long sleeves, and layers of lace.'},
+ {id:'ribbon-mage',category:'Avatar',name:'Bluebell ribbon mage',price:20,kind:'avatar',slot:'outfit',value:'ribbon-mage',icon:'✧',color:'#cdd3ef',description:'A blue-and-pink cape dress with a huge bow, frilled skirt, and a bunny pocket.'},
  {id:'sakura-cottage',category:'Houses',name:'Sakura cottage',price:45,kind:'house',value:'sakura-cottage',icon:'⌂',color:'#f1c8e1',description:'An entire pink cottage with a lavender roof. Includes a room to enter and decorate.'},
  {id:'seaside-home',category:'Houses',name:'Seashell beach house',price:45,kind:'house',value:'seaside-home',icon:'⌂',color:'#b9dfe4',description:'A raised seaside home with a mint roof and porch. Includes a decoratable interior.'},
  {id:'forest-cabin',category:'Houses',name:'Woodland storybook cabin',price:40,kind:'house',value:'forest-cabin',icon:'⌂',color:'#cbdcbd',description:'A timber cabin with a green roof and chimney. Make its interior your own.'},

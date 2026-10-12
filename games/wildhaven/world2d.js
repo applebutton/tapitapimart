@@ -1,8 +1,11 @@
+import {AVATAR_OPTIONS} from './catalog.js';
 import {BIOMES,PENS,creatureInfo} from './engine.js';
 import {SPOTS} from './housing.js';
 const ink='#241c2d';
 function load(name){const img=new Image();img.onload=()=>window.dispatchEvent(new Event('wildhaven-art-ready'));img.src=new URL(name,import.meta.url).href;return img;}
 const environment=load('./anime-environment.png');
+const accessories=load('./anime-accessories.png');
+const outfits=load('./anime-outfits.png'),heads=load('./anime-heads.png');
 const hero=load('./anime-avatar.png'),creatures=load('./anime-creatures.png'),sky=load('./anime-sky.png');
 function ready(img){return img.complete&&img.naturalWidth>0;}
 function shape(c,fill,draw,width=2.3){c.beginPath();draw();c.fillStyle=fill;c.fill();c.strokeStyle=ink;c.lineWidth=width;c.lineJoin='round';c.stroke();}
@@ -16,49 +19,43 @@ export function drawFriend(c,type,x,y,size=62){
  if(ready(creatures)){const index=typeof type==='number'?type:Number(String(type).split('-')[1]),cw=creatures.naturalWidth/3,ch=creatures.naturalHeight/2;const w=size*(info.giant?1.55:1);c.drawImage(creatures,index%3*cw,Math.floor(index/3)*ch,cw,ch,x-w/2,y-w,w,w);if(info.giant){bow(c,x,y-w*.15,w*.13);}return;}
  oval(c,x,y-size*.4,size*.4,size*.4,info.color);oval(c,x-8,y-size*.45,3,5,ink);oval(c,x+8,y-size*.45,3,5,ink);
 }
-const tintedAvatars=new Map();
-function portraitSprite(state){
- const a=state.avatar,key=a.skin+a.hairColor;if(tintedAvatars.has(key))return tintedAvatars.get(key);
- const canvas=document.createElement('canvas');canvas.width=hero.naturalWidth;canvas.height=hero.naturalHeight;const q=canvas.getContext('2d');q.drawImage(hero,0,0);const pixels=q.getImageData(0,0,canvas.width,canvas.height),data=pixels.data;
- const rgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)),skin=rgb(a.skin),hair=rgb(a.hairColor);
- for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++){const i=(y*canvas.width+x)*4;if(data[i+3]<100)continue;const u=x/canvas.width,v=y/canvas.height,r=data[i],g=data[i+1],b=data[i+2];
-  const skinArea=(u>.38&&u<.65&&v>.09&&v<.20)||(u>.26&&u<.37&&v>.43&&v<.51)||(u>.86&&u<.98&&v>.4&&v<.49);
-  if(skinArea&&r>g+5&&g>b+5&&r>130){const light=Math.min(1.12,(r+g+b)/(255+229+211));for(let k=0;k<3;k++)data[i+k]=Math.min(255,skin[k]*light);}
-  else if(a.hairColor!=='#efa0bd'&&v>.045&&v<.39&&r>g*1.12&&b>g&&r>125){const light=(r+g+b)/600;for(let k=0;k<3;k++)data[i+k]=Math.min(255,hair[k]*light);}
+// Every combination uses the same illustrated paper-doll layers: never a cartoon fallback.
+const dollCache=new Map();
+// Discard stray pixels from adjacent atlas cells without changing the illustrated silhouette.
+function isolateLayer(pixels,width,height){
+ const d=pixels.data,tags=new Int32Array(width*height),queue=new Int32Array(tags.length);let label=0,largest=0,best=0;
+ for(let start=0;start<tags.length;start++){if(tags[start]||d[start*4+3]<80)continue;label++;let read=0,end=1;queue[0]=start;tags[start]=label;
+  while(read<end){const p=queue[read++],x=p%width;for(const n of [x?p-1:-1,x<width-1?p+1:-1,p-width,p+width])if(n>=0&&n<tags.length&&!tags[n]&&d[n*4+3]>=80){tags[n]=label;queue[end++]=n;}}
+  if(end>best){best=end;largest=label;}
  }
- q.putImageData(pixels,0,0);tintedAvatars.set(key,canvas);return canvas;
+ for(let i=0;i<tags.length;i++)if(tags[i]!==largest&&!((i%width&&tags[i-1]===largest)||(i%width<width-1&&tags[i+1]===largest)||tags[i-width]===largest||tags[i+width]===largest))d[i*4+3]=0;
 }
-function customAvatar(c,state,x,y,height){
- const a=state.avatar,hair=a.hairColor,skin=a.skin,cloth=a.outfit==='cloud-dress'?'#c4def1':a.outfit==='star-hoodie'?'#edb8d4':a.outfit==='sugarcloud-dress'?'#ccb7e8':state.coat;
- c.save();c.translate(x,y);c.scale(height/210,height/210);
- const long=['sugarcloud-waves','ponytail'].includes(a.hair);
- shape(c,hair,()=>{c.moveTo(-24,-188);c.bezierCurveTo(-50,-160,-32,long?-75:-126,-27,long?-64:-122);c.lineTo(31,long?-64:-122);c.bezierCurveTo(38,-145,44,-194,0,-197);c.closePath();});
- for(const side of [-1,1]){rect(c,side*12-5,-65,10,56,'#fff4f8');rect(c,side*12-9,-12,18,12,'#eab2cf');}
- shape(c,cloth,()=>{c.moveTo(-19,-127);c.lineTo(19,-127);c.lineTo(17,-101);c.lineTo(32,-62);c.quadraticCurveTo(0,-53,-32,-62);c.lineTo(-17,-101);c.closePath();});
- if(['hoodie','star-hoodie','overalls'].includes(a.outfit)){rect(c,-23,-104,46,34,cloth);for(const side of [-1,1])rect(c,side*12-7,-68,14,37,cloth);}
- for(const side of [-1,1]){shape(c,cloth,()=>{c.moveTo(side*18,-124);c.lineTo(side*27,-119);c.lineTo(side*36,-85);c.lineTo(side*26,-82);c.closePath();});oval(c,side*31,-78,5,8,skin);}
- if(a.outfit==='overalls'){rect(c,-13,-124,26,35,'#f1dcc7');for(const side of [-1,1])line(c,[[side*10,-127],[side*10,-141]],'#f1dcc7',5);}
- else if(a.outfit==='star-hoodie')text(c,'★',0,-104,19);
- else{for(let i=0;i<9;i++)oval(c,-28+i*7,-62,4,3,'#fff5fc');bow(c,0,-124,9);}
- rect(c,-5,-140,10,16,skin,2);
- shape(c,skin,()=>{c.moveTo(-27,-173);c.bezierCurveTo(-28,-148,-16,-135,0,-132);c.bezierCurveTo(18,-136,30,-151,28,-174);c.bezierCurveTo(19,-191,-15,-193,-27,-173);});
- for(const side of [-1,1]){oval(c,side*11,-157,7,10,'#fffaff');oval(c,side*11,-156,5,8,'#965780');oval(c,side*11,-157,2.5,5,ink);oval(c,side*11-2,-161,2,3,'white',false);line(c,[[side*4,-164],[side*11,-167],[side*19,-163]],ink,2.5);oval(c,side*20,-145,4,2,'#efacba',false);}
- line(c,[[-3,-140],[0,-139],[4,-141]],'#aa6c80',1);
- shape(c,hair,()=>{c.moveTo(-29,-172);c.bezierCurveTo(-34,-198,24,-206,29,-175);c.lineTo(22,-160);c.lineTo(14,-179);c.lineTo(10,-163);c.lineTo(2,-181);c.lineTo(-6,-163);c.lineTo(-14,-180);c.lineTo(-21,-161);c.closePath();});
- if(a.hair==='space-buns')for(const side of [-1,1])oval(c,side*29,-186,12,12,hair);
- if(a.hair==='curls')for(let i=0;i<7;i++)oval(c,Math.sin(i)*29,-162+Math.cos(i)*20,7,9,hair);
- if(a.accessory==='bunny-beret'){oval(c,0,-190,31,11,'#fff6fc');for(const side of [-1,1]){oval(c,side*35,-174,7,21,'#fff5fc');oval(c,side*35,-174,3,15,'#f1b6d3',false);bow(c,side*20,-194,6);}}
- if(a.accessory==='round-glasses')for(const side of [-1,1]){c.beginPath();c.arc(side*11,-157,10,0,Math.PI*2);c.strokeStyle=ink;c.lineWidth=1.5;c.stroke();}
- if(a.accessory==='star-clip')text(c,'★',24,-177,13);
- c.restore();
+const headRects=[[0,0,494,436,260,396],[510,0,512,443,258,391],[1040,0,496,478,195,402],[0,460,512,480,260,412],[480,454,580,570,288,380]];
+function dollLayer(image,index,cols,avatar,head=false){
+ const key=[image.src,index,avatar.skin,head?avatar.hairColor:''].join('|');if(dollCache.has(key))return dollCache.get(key);
+ const c=document.createElement('canvas');const crop=head?headRects[index]:[index%cols*image.naturalWidth/cols,Math.floor(index/cols)*image.naturalHeight/2,image.naturalWidth/cols,image.naturalHeight/2];c.width=crop[2];c.height=crop[3];const q=c.getContext('2d');q.drawImage(image,...crop.slice(0,4),0,0,c.width,c.height);
+ const pixels=q.getImageData(0,0,c.width,c.height),d=pixels.data,rgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)),skin=rgb(avatar.skin),hair=rgb(avatar.hairColor);
+ isolateLayer(pixels,c.width,c.height);
+ for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){const i=(y*c.width+x)*4;if(d[i+3]<80)continue;const r=d[i],g=d[i+1],b=d[i+2],u=x/c.width,v=y/c.height;
+  // Skin uses warm peach; pink clothing and hair are outside this color range.
+  const skinArea=head?(u>.19&&u<.81&&v>.32&&v<.83):(v<.11||(u<.23||u>.77)&&v>.20&&v<.57);
+  if(skinArea&&r>g+7&&g>b+10&&r>155){const light=Math.min(1.18,(r+g+b)/665);for(let k=0;k<3;k++)d[i+k]=Math.min(255,skin[k]*light);}
+  else if(head&&r>g*1.14&&b>g*.94&&r>105){const light=(r+g+b)/590;for(let k=0;k<3;k++)d[i+k]=Math.min(255,hair[k]*light);}
+ }
+ q.putImageData(pixels,0,0);dollCache.set(key,c);return c;
 }
 function drawAvatar(c,state,x,y,height=116){
- if(!ready(hero)){text(c,'Loading your anime avatar…',x,y,12);return;}
- if(state.avatar.outfit!=='sugarcloud-dress'||state.avatar.hair!=='sugarcloud-waves'||!['bunny-beret','round-glasses'].includes(state.avatar.accessory)){customAvatar(c,state,x,y,height);return;}
- const width=height*hero.naturalWidth/hero.naturalHeight;
- c.drawImage(portraitSprite(state),x-width/2,y-height,width,height);
- // Additional purchased accessories remain visible with the illustrated outfit.
- if(state.avatar.accessory==='round-glasses'){const yy=y-height*.815;for(const side of [-1,1]){c.beginPath();c.ellipse(x+side*height*.043,yy,height*.033,height*.026,0,0,Math.PI*2);c.strokeStyle='#554363';c.lineWidth=1.5;c.stroke();}}
+ if(!ready(outfits)||!ready(heads)){text(c,'Loading your anime avatar…',x,y,12);return;}
+ const a=state.avatar,body=dollLayer(outfits,Math.max(0,AVATAR_OPTIONS.outfit.indexOf(a.outfit)),4,a),head=dollLayer(heads,Math.max(0,AVATAR_OPTIONS.hair.indexOf(a.hair)),3,a,true);
+ c.save();c.translate(x,y-height);c.scale(height/300,height/300);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+ // The head overlaps the neck, keeping the same face with every outfit.
+ c.drawImage(body,-79,88,158,211);const hr=headRects[Math.max(0,AVATAR_OPTIONS.hair.indexOf(a.hair))];c.drawImage(head,-hr[4]*.23,94-hr[5]*.23,head.width*.23,head.height*.23);
+ if(ready(accessories)){
+  if(a.accessory==='bunny-beret')c.drawImage(accessories,0,0,920,724,-66,-5,132,104);
+  if(a.accessory==='round-glasses')c.drawImage(accessories,920,210,760,310,-41,52,82,33);
+  if(a.accessory==='star-clip')c.drawImage(accessories,1730,190,442,430,27,22,29,28);
+ }
+ c.restore();
 }
 function flower(c,x,y,color='#f4b7d7'){line(c,[[x,y],[x,y+12]],'#739177',1.5);for(let k=0;k<5;k++)oval(c,x+Math.cos(k*1.257)*4,y+Math.sin(k*1.257)*4,3,3,color,false);oval(c,x,y,2,2,'#edc77d',false);}
 function scenerySprite(c,index,x,y,width){const cells=[[0,0,512,512],[512,0,512,512],[1024,0,512,512],[0,512,512,512],[530,562,545,456],[1090,562,446,456]],r=cells[index],height=width*r[3]/r[2];c.drawImage(environment,...r,x-width/2,y-height,width,height);}
@@ -108,13 +105,13 @@ export class World2D {
  }
 }
 export class AvatarPreview {
- constructor(canvas){this.canvas=canvas;this.c=canvas.getContext('2d');canvas.width=280;canvas.height=300;}
+ constructor(canvas){this.canvas=canvas;this.c=canvas.getContext('2d');this.ratio=Math.min(devicePixelRatio||1,3);canvas.width=280*this.ratio;canvas.height=300*this.ratio;this.c.scale(this.ratio,this.ratio);}
  render(state){this.c.clearRect(0,0,280,300);drawAvatar(this.c,state,140,294,290);}
 }
 const photoCache=new Map();
 export function shopPicture(item,state){
- const key=item.id+JSON.stringify(state.avatar)+(ready(hero)?'h':'')+(ready(creatures)?'c':'')+(ready(environment)?'e':'');if(photoCache.has(key))return photoCache.get(key);
- const canvas=document.createElement('canvas');canvas.width=320;canvas.height=240;const c=canvas.getContext('2d');c.fillStyle=item.color;c.fillRect(0,0,320,240);
+ const key=item.id+JSON.stringify(state.avatar)+(ready(heads)&&ready(outfits)?'d':'')+(ready(accessories)?'a':'')+(ready(hero)?'h':'')+(ready(creatures)?'c':'')+(ready(environment)?'e':'');if(photoCache.has(key))return photoCache.get(key);
+ const canvas=document.createElement('canvas');canvas.width=640;canvas.height=480;const c=canvas.getContext('2d');c.scale(2,2);c.fillStyle=item.color;c.fillRect(0,0,320,240);
  if(item.kind==='furniture')drawFurniture(c,item.id,160,130,2);
  else if(item.kind==='avatar'){const copy=structuredClone(state);copy.avatar[item.slot]=item.value;drawAvatar(c,copy,160,235,230);}
  else if(item.kind==='pet')drawFriend(c,item.value==='cloud-cat'?2:4,160,205,180);
