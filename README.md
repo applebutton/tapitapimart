@@ -4,6 +4,12 @@ A collection of small progressive web games. The first game is tic tac toe, with
 
 Choose Easy for random moves, Medium for immediate wins and blocks, or Hard for an unbeatable minimax opponent. You play X against the computer. Changing opponent or difficulty clears the current board and scores. Computer play also works offline.
 
+## Wildhaven
+
+Open `games/wildhaven/`, or choose Wildhaven on the game shelf. Explore three biomes, catch six kinds of magical creatures, and care for them at your ranch. Move with WASD / arrow keys, the on-screen direction buttons, or a tap on the map. Space / E or Catch / gather befriends a nearby creature or gathers berries. Each catch earns 3 stardust; happy ranch companions give 8-stardust gifts at one-minute intervals. Petting is free, and berries regrow in the wild, so supplies never block play.
+
+Purple wisps cause bumps. Three hits respawn you at the ranch with full hearts and all companions and rewards intact. There is no win or lose state. Device-local progress is saved automatically; it does not sync across devices. Clearing browser storage removes the save. The game works offline after its assets have been cached. No account, backend, external artwork, or runtime dependencies are required.
+
 ## Develop
 
 Requires Python 3 and Node.js 18+ (for tests). No package installation or build step is needed.

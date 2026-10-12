@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#253f37">
+<meta name="description" content="An endless little adventure. Befriend magical creatures, build a happy ranch, and wander wherever you like.">
+<title>Wildhaven · Tapitapimart</title><link rel="manifest" href="../../manifest.webmanifest"><link rel="icon" href="../../icons/icon.svg"><link rel="apple-touch-icon" href="../../icons/icon-192.png"><link rel="stylesheet" href="wildhaven.css">
+</head>
+<body>
+<header><a class="brand" href="../../">✳ <span>tapitapimart</span></a><nav aria-label="Games"><a href="../../">Tic tac toe</a><span class="current">Wildhaven</span></nav><span class="edition">A LITTLE WORLD OF YOUR OWN</span></header>
+<main>
+<div class="title-row"><div><p class="eyebrow">THE GAME SHELF / NO. 002</p><h1>Wildhaven<span>✦</span></h1><p class="intro">Wander a little. Find a friend. Make a home.</p></div><div class="wallet"><span><b id="gems">0</b> ✧ stardust</span><span><b id="treats">8</b> ◉ treats</span></div></div>
+<div class="game-layout">
+<section class="world-panel" aria-label="Adventure world">
+<div class="world-heading"><div><span class="place-dot"></span><strong id="place">Sunpetal Meadow</strong><span id="subtitle">Where every adventure begins</span></div><span id="health" aria-label="3 of 3 hearts">♥ ♥ ♥</span></div>
+<div class="viewport"><canvas id="world" width="960" height="580" tabindex="0" aria-label="Adventure map. Move with arrow keys or W A S D. Press Space or E to catch a nearby creature or gather berries. You can also tap the map to walk.">Your browser needs canvas support to display Wildhaven.</canvas><div class="world-hint" id="world-hint">Tap anywhere to wander</div><div class="respawn" id="respawn" hidden role="dialog" aria-modal="true" aria-labelledby="respawn-title"><span>✧</span><h2 id="respawn-title">A soft landing.</h2><p>A passing wisp bumped you home.<br>Your companions and rewards are safe.</p><button id="continue">Back to the ranch →</button></div></div>
+<div class="control-bar"><div class="dpad" aria-label="Movement controls"><button data-dir="up" aria-label="Move up">↑</button><button data-dir="left" aria-label="Move left">←</button><button data-dir="down" aria-label="Move down">↓</button><button data-dir="right" aria-label="Move right">→</button></div><button class="action" id="interact">✧ Catch / gather <kbd>SPACE</kbd></button><button class="home-button" id="home">⌂ Ranch</button></div>
+<p id="message" class="message" role="status" aria-live="polite">Welcome, wanderer. Walk near a creature and use Catch to befriend it.</p>
+</section>
+<aside>
+<section class="panel destinations"><p class="eyebrow">WHERE TO?</p><h2>The world is yours.</h2><button data-biome="meadow" class="destination active"><span class="destination-icon meadow">❋</span><span><strong>Sunpetal Meadow</strong><small>Soft grass & sunny souls</small></span><b>↗</b></button><button data-biome="grove" class="destination"><span class="destination-icon grove">♧</span><span><strong>Whispering Grove</strong><small>Quiet magic in the trees</small></span><b>↗</b></button><button data-biome="ridge" class="destination"><span class="destination-icon ridge">◇</span><span><strong>Moonstone Ridge</strong><small>Starlight & wandering wisps</small></span><b>↗</b></button><button data-biome="ranch" class="destination"><span class="destination-icon ranch">⌂</span><span><strong>Your ranch</strong><small id="ranch-count">A home for new friends</small></span><b>↗</b></button></section>
+<section class="panel avatar-panel"><p class="eyebrow">YOUR WANDERER</p><div class="avatar-row"><span class="avatar-icon">☀</span><div><h2>A coat for the road</h2><div class="swatches" aria-label="Avatar coat color"><button data-coat="#dd846a" style="--swatch:#dd846a" aria-label="Terracotta coat" aria-pressed="true"></button><button data-coat="#7a99cc" style="--swatch:#7a99cc" aria-label="Blue coat" aria-pressed="false"></button><button data-coat="#9b80ba" style="--swatch:#9b80ba" aria-label="Violet coat" aria-pressed="false"></button><button data-coat="#6e9f80" style="--swatch:#6e9f80" aria-label="Green coat" aria-pressed="false"></button></div></div></div></section>
+<details class="panel how-to"><summary>Field notes <span>+</span></summary><p>Move with <b>WASD / arrow keys</b>, hold the arrow buttons, or tap the map. Get close to a creature and press <b>Space / E</b> or <b>Catch / gather</b>. Every catch earns 3 stardust.</p><p>Pink berry bushes give free treats. At your ranch, feed and pet companions to raise happiness. At 75 happiness they make gifts worth 8 stardust, once a minute.</p><p>Glowing purple wisps can bump you. After three hits, you respawn safely at the ranch with everything you collected. There is no ending, timer, or losing.</p><p>Your progress saves on this device. Creature happiness gently settles while you are away, but never below 25. Your friends stay forever.</p></details>
+</aside>
+</div>
+<section class="collection-panel"><div class="collection-heading"><div><p class="eyebrow">LITTLE FRIENDS, BIG FEELINGS</p><h2>Your companions <span id="collection-count">0</span></h2></div><button id="buy-treats">5 treats <span>· 5 stardust</span></button></div><p class="care-note" id="care-note">Return to your ranch to feed, pet, and collect gifts.</p><div id="collection" class="collection"></div></section>
+<footer><span>NO FINISH LINE. JUST ONE MORE ADVENTURE.</span><span id="save-status">Saved on this device · v4</span><button id="update" hidden>Update ready · reload</button></footer>
+</main><script type="module" src="game.js"></script>
+</body></html>

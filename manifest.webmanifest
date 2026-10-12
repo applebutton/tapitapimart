@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Tapitapimart — Little Games",
   "short_name": "Tapitapimart",
-  "description": "Small games. Big rematches. Start with tic tac toe.",
+  "description": "Play tic tac toe or wander Wildhaven, an endless creature adventure.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
