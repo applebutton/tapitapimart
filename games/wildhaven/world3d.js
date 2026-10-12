@@ -1,4 +1,5 @@
-import {HOUSE_STYLES, OUTFIT_COLORS} from './catalog.js';
+import {waterAt,waterArea,isSwimOutfit,LAKES,RANCH_POOL} from './water.js';
+import {HOUSE_STYLES, OUTFIT_COLORS,FENCE_STYLES,POOL_STYLES} from './catalog.js';
 import {animeCreature,animeTree,animeAvatar} from './anime-art3d.js';
 import {SPOTS} from './housing.js';
 import * as THREE from '../../vendor/three/three.module.js';
@@ -70,6 +71,44 @@ function tree(g,x,z,index,ridge=false){
  strand(g,[[x,0,z],[x+.12,1.4,z],[x-.08,2.7,z]],.105,'#b993a4');
  for(let k=0;k<4;k++){const angle=k*2.2+index;const bx=x+Math.cos(angle)*.6,bz=z+Math.sin(angle)*.6;strand(g,[[x,1.6,z],[bx,2.35,bz]],.045,'#b993a4');for(let j=0;j<4;j++){ball(g,bx+Math.sin(j*2.4)*.45,2.6+j%2*.3,bz+Math.cos(j*2.4)*.45,.65,.38,.55,ridge?'#c1b4e6':index%3?'#f4b7d4':'#add8bf');for(let petal=0;petal<3;petal++)ball(g,bx+Math.sin(j*2.4+petal)*.6,2.8+j%2*.3,bz+Math.cos(j*2.4+petal)*.6,.16,.06,.13,index%3?'#ffe0ed':'#d9efcf');}}
 }
+function charm(g,x,y,z,type,size=.16){
+ const part=new THREE.Group();part.position.set(x,y,z);part.scale.setScalar(size);g.add(part);
+ if(type==='bunny'){ball(part,0,0,0,.75,.65,.3,'#fff0f7');for(const side of [-1,1]){ball(part,side*.35,.77,0,.22,.6,.2,'#fff0f7');ball(part,side*.35,.8,.17,.1,.4,.04,'#f4b2d2');ball(part,side*.23,.07,.29,.06,.09,.04,'#906587');}ribbon(part,0,-.55,.22,.42);}
+ else if(type==='star'){const m=new THREE.Mesh(geometry('soft-star',()=>{const s=new THREE.Shape();for(let k=0;k<10;k++){const t=k*Math.PI/5+Math.PI/2,r=k%2?.44:1;k?s.lineTo(Math.cos(t)*r,Math.sin(t)*r):s.moveTo(Math.cos(t)*r,Math.sin(t)*r);}s.closePath();return new THREE.ExtrudeGeometry(s,{depth:.16,bevelEnabled:true,bevelThickness:.09,bevelSize:.06,bevelSegments:3});}),material('#ffdfa1'));part.add(m);}
+ else {for(let i=0;i<5;i++){const petal=ball(part,(i-2)*.24,.1,0,.25,.8-Math.abs(i-2)*.14,.2,i%2?'#ffe8ef':'#e8c2e8');petal.rotation.z=-(i-2)*.2;}ball(part,0,-.4,.2,.25,.25,.2,'#fff6dd');}
+ return part;
+}
+export function fenceMesh(style,width=3){
+ const spec=FENCE_STYLES[style],g=new THREE.Group();if(!spec)return g;const n=Math.max(2,Math.round(width/1.25));
+ for(let i=0;i<=n;i++){const x=-width/2+i*width/n;cylinder(g,x,.55,0,.065,.075,1.1,spec.color);ball(g,x,1.13,0,.12,.12,.12,spec.accent);}
+ for(const y of [.3,.72])box(g,0,y,0,width,.09,.12,spec.color);
+ for(let i=0;i<n;i++){const x=-width/2+(i+.5)*width/n;strand(g,[[x-width/n/2,1.08,0],[x,.94,0],[x+width/n/2,1.08,0]],.012,spec.accent);const light=ball(g,x,1,0,.055,.07,.055,'#fff2b5');light.material=material('#fff2b5',true);charm(g,x,.66,.11,spec.charm,.16);if(i%2===0)ribbon(g,x,.36,.10,.14);}
+ return g;
+}
+export function poolMesh(style){
+ const spec=POOL_STYLES[style],g=new THREE.Group();if(!spec)return g;
+ const rim=torus(g,0,.16,0,2.64,.17,spec.color);rim.rotation.x=-Math.PI/2;rim.scale.y=.5;
+ ball(g,0,.085,0,2.55,.055,1.25,spec.water);
+ for(let i=0;i<16;i++){const t=i/16*Math.PI*2,x=Math.cos(t)*2.64,z=Math.sin(t)*1.32;const pearl=ball(g,x,.32,z,.065,.075,.065,spec.accent);pearl.material=material(spec.accent,true);}
+ for(const side of [-1,1]){charm(g,side*2,.48,-.93,spec.charm,.23);ribbon(g,side*2,.21,1.02,.19);}
+ for(const r of [.55,1.25]){const ripple=torus(g,0,.148,0,r,.014,'#e9fffb');ripple.rotation.x=-Math.PI/2;ripple.scale.y=.5;}
+ if(spec.charm==='star'){for(const x of [-.65,.65])charm(g,x,.25,-1.32,'star',.2);}
+ if(spec.charm==='shell'){const fountain=ball(g,0,.48,-1.38,.45,.43,.25,'#f3d7e6');charm(g,0,.78,-1.38,'shell',.36);ball(g,0,.29,-1.08,.035,.28,.035,'#c8f7f4');}
+ return g;
+}
+function lakeMesh(lake){const g=new THREE.Group();ball(g,0,.06,0,lake.rx*.04,.045,lake.ry*.04,lake.color);for(let i=0;i<18;i++){const t=i/18*Math.PI*2;ball(g,Math.cos(t)*(lake.rx*.04+.12),.10,Math.sin(t)*(lake.ry*.04+.12),.24,.16,.19,i%3?'#d2d5d2':'#f3cfdf');}for(let i=0;i<5;i++){const pad=cylinder(g,-2+i*.8,.12,-.75,.3,.3,.035,'#a5d3b6');flower(g,-2+i*.8,.2,-.75,'#efbfd8',.14);}return g;}
+function reefScenery(g){
+ box(g,0,-.15,0,65,.25,65,'#c6dfce');
+ for(let i=0;i<65;i++){const x=((i*71)%340-170)/10,z=((i*43)%240-120)/10;if(Math.abs(x)<1.5)continue;
+  if(i%3===0){for(let k=0;k<3;k++){const leaf=ball(g,x+(k-1)*.19,.65+k%2*.35,z,.13,.75+k%2*.3,.055,i%2?'#7abfad':'#a1cfba');leaf.rotation.z=(k-1)*.25;}}
+  else if(i%3===1){for(let k=0;k<4;k++)ball(g,x+Math.sin(k)*.25,.2+k%2*.28,z+Math.cos(k)*.15,.14,.30,.12,i%2?'#eebbd8':'#bbbbe8');}
+  else {ball(g,x,.12,z,.43,.19,.32,'#e4d9d9');charm(g,x,.38,z,'shell',.19);}
+ }
+ for(const side of [-1,1]){ball(g,side*3,1.4,-5,.6,1.5,.7,'#b4d9d5');for(let i=0;i<5;i++)ball(g,side*3+i*side*.15,2.7+i*.03,-5,.5,.3,.6,'#c2e6d9');}
+ for(let i=0;i<32;i++){const m=ball(g,Math.sin(i*4.3)*15,.6+i%7*.42,Math.cos(i*2.4)*11,.05+i%3*.025,.06+i%3*.025,.05,'#d5fffc');m.material=material('#c1fff2',true);}
+ sign(g,'CORAL DREAM LAGOON',0,3.1,-6,5);
+}
+
 export function furnitureMesh(id){const g=new THREE.Group();
  if(id==='sofa'){box(g,0,.4,0,1.7,.5,.7,'#d7b6d6',.15);box(g,0,.8,-.3,1.7,.7,.2,'#efcbe1',.1);for(const x of [-.78,.78])box(g,x,.6,0,.2,.5,.7,'#d8aed0',.09);for(const x of [-.38,.38])ball(g,x,.62,-.12,.26,.22,.09,'#fff0e7');}
  if(id==='table'){cylinder(g,0,.65,0,.6,.6,.12,'#f2ddc3');cylinder(g,0,.32,0,.09,.17,.6,'#bb92a3');}
@@ -102,20 +141,22 @@ let photoRenderer;const photos=new Map();
 export function shopPicture(item,state){
  const key=item.id+JSON.stringify(state.avatar);if(photos.has(key))return photos.get(key);
  if(!photoRenderer){photoRenderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});photoRenderer.setSize(320,240);photoRenderer.setPixelRatio(2);}
- const scene=new THREE.Scene();scene.background=new THREE.Color(item.color);scene.add(new THREE.HemisphereLight('#fff7fc','#b4aacb',2.4));const light=new THREE.DirectionalLight('#fff7ed',2);light.position.set(-3,6,5);scene.add(light);let model;
+ const scene=new THREE.Scene();scene.background=new THREE.Color(item.color);scene.add(new THREE.HemisphereLight('#fff7fc','#b4aacb',1.3));const light=new THREE.DirectionalLight('#fff7ed',1.6);light.position.set(-3,6,5);scene.add(light);let model;
  if(item.kind==='house')model=houseMesh(item.value);
+ else if(item.kind==='pool')model=poolMesh(item.value);
+ else if(item.kind==='fence')model=fenceMesh(item.value);
  else if(item.kind==='furniture')model=furnitureMesh(item.id);
  else if(item.kind==='avatar'){const copy=structuredClone(state);copy.avatar[item.slot]=item.value;model=avatarMesh(copy);}
  else if(item.kind==='pet')model=petMesh(item.value);
  else if(item.kind==='tool'||item.kind==='upgrade')model=vacuumMesh(item.value||state.toolStyle,state.avatar.skin,item.id==='long-reach','#edbad4');
  else {model=new THREE.Group();if(item.kind==='theme'){box(model,0,.6,0,1.5,1.2,1.1,'#fff0dc');box(model,0,1.28,0,1.8,.2,1.4,item.value==='cute'?'#e8acd1':'#a8cfc9');box(model,0,.4,.58,.35,.8,.04,'#c4b5df');for(const x of [-.48,.48])box(model,x,.8,.58,.3,.3,.04,'#b5ddea');}else if(item.material==='wood'){for(let i=0;i<3;i++){const log=cylinder(model,(i-1)*.22,.25,0,.1,.1,.8,'#c19c80');log.rotation.z=Math.PI/2;}}else if(item.material==='stone'||item.material==='metal'){for(let i=0;i<3;i++){const m=new THREE.Mesh(new THREE.IcosahedronGeometry(.24,1),material(item.color));m.position.set((i-1)*.28,.25,0);m.scale.y=1.6;model.add(m);}}else for(let i=0;i<5;i++)ball(model,Math.sin(i)*.25,.3+i%2*.17,Math.cos(i)*.2,.14,.14,.14,item.material==='berries'?'#e99ebb':'#ffe2a4');}
- scene.add(model);const bounds=new THREE.Box3().setFromObject(model),center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3()),camera=new THREE.PerspectiveCamera(35,4/3,.01,30);const distance=Math.max(size.x,size.y,size.z,.7)*2.3;camera.position.set(center.x+distance*.35,center.y+distance*.22,center.z+distance);camera.lookAt(center);photoRenderer.render(scene,camera);const url=photoRenderer.domElement.toDataURL('image/png');photos.set(key,url);return url;
+ scene.add(model);const bounds=new THREE.Box3().setFromObject(model),center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3()),camera=new THREE.PerspectiveCamera(35,4/3,.01,30);const distance=Math.max(size.x,size.y,size.z,.7)*(item.kind==='pool'?1.05:item.kind==='fence'?1.35:2.3);camera.position.set(center.x+distance*.30,center.y+distance*(item.kind==='pool'?.95:.22),center.z+distance);camera.lookAt(center);photoRenderer.render(scene,camera);const url=photoRenderer.domElement.toDataURL('image/png');photos.set(key,url);return url;
 }
 export class World3D {
  constructor(canvas){
   this.canvas=canvas;this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'low-power'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.NoToneMapping;
   this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#dcecf0');this.scene.fog=new THREE.Fog('#efe0ee',65,95);
-  const skyTexture=new THREE.TextureLoader().load(new URL('./anime-sky.png',import.meta.url).href);skyTexture.colorSpace=THREE.SRGBColorSpace;skyTexture.offset.y=-.2;
+  const skyTexture=new THREE.TextureLoader().load(new URL('./anime-sky.png',import.meta.url).href);skyTexture.colorSpace=THREE.SRGBColorSpace;skyTexture.offset.y=-.2;this.landSkyTexture=skyTexture;this.reefSkyTexture=new THREE.TextureLoader().load(new URL('./anime-reef-sky.png',import.meta.url).href);this.reefSkyTexture.colorSpace=THREE.SRGBColorSpace;this.reefSkyTexture.offset.y=-.12;
   this.sky=new THREE.Mesh(new THREE.SphereGeometry(75,48,24),new THREE.MeshBasicMaterial({map:skyTexture,side:THREE.BackSide,fog:false,toneMapped:false}));this.scene.add(this.sky);
   this.camera=new THREE.PerspectiveCamera(65,1,.04,100);this.camera.rotation.order='YXZ';this.scene.add(this.camera);
   this.scene.add(new THREE.HemisphereLight('#fff7ed','#bca6cd',1.25));const sun=new THREE.DirectionalLight('#fff5ed',1.65);sun.position.set(-8,16,9);this.scene.add(sun);
@@ -127,14 +168,15 @@ export class World3D {
  resize(){const w=this.canvas.clientWidth,h=this.canvas.clientHeight;if(!w||!h)return;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
  cameraState(state,time=0,moving=false){
   // Eye level remains attached to the explorer, indoors and outdoors.
-  this.camera.position.set(wx(state.x),1.65,wz(state.y));
+  const wet=waterAt(state),bob=wet&&moving?Math.sin(time*2)*.025:0;this.camera.position.set(wx(state.x),state.biome==='reef'?3.5-state.swimDepth+bob:wet?.65+bob:1.65,wz(state.y));
   this.camera.rotation.set(state.pitch||0,state.yaw||0,0,'YXZ');
   this.camera.updateMatrixWorld();
  }
 
  terrain(state){
-  const signature=JSON.stringify([state.biome,state.homeLevel,state.houseStyle,state.ranchTheme,state.ranchLand,state.room,state.decor,state.owned.filter(id=>['lanterns','sofa','table','chair','planter'].includes(id))]);if(signature===this.lastScene)return;this.lastScene=signature;this.scenery.traverse(o=>{if(o.isInstancedMesh)o.dispose();});this.scenery.clear();
+  const signature=JSON.stringify([state.biome,state.homeLevel,state.houseStyle,state.ranchTheme,state.ranchLand,state.room,state.decor,state.poolStyle,state.fenceStyle,state.owned.filter(id=>['lanterns','sofa','table','chair','planter'].includes(id))]);if(signature===this.lastScene)return;this.lastScene=signature;this.scenery.traverse(o=>{if(o.isInstancedMesh)o.dispose();});this.scenery.clear();
   const g=this.scenery,b=BIOMES[state.biome];
+  if(state.biome==='reef'){this.sky.visible=true;this.sky.material.map=this.reefSkyTexture;this.scene.background.set('#83c8d3');this.scene.fog.color.set('#83c8d3');this.scene.fog.near=12;this.scene.fog.far=45;reefScenery(g);batchScenery(g);return;}this.sky.material.map=this.landSkyTexture;this.scene.fog.near=65;this.scene.fog.far=95;
   if(state.room){this.sky.visible=false;this.interior(state);batchScenery(g);return;}this.sky.visible=true;this.scene.background.set(state.biome==='ridge'?'#e2e0f0':'#dcecf0');this.scene.fog.color.copy(this.scene.background);
   const ground=box(g,0,-.14,0,65,.25,65,state.biome==='ridge'?'#dbd0e9':'#c6dfce',.03);ground.material=paintedGround(state.biome==='ridge');if(state.biome==='ranch'&&state.ranchLand==='beach')ground.material=material('#f5dfbd');
   const path=state.biome==='ridge'?'#e5dced':'#eedcdf';box(g,0,.015,2.5,2.6,.04,25,path,.02);
@@ -144,7 +186,7 @@ export class World3D {
   for(let i=0;i<22;i++){const z=i*.85-9;const x=Math.sin(i*.4)*.45;const stone=cylinder(g,x,.04,z,.48,.5,.055,'#f6e5e8');stone.scale.z=.70;}
   if(state.biome==='ranch'&&state.ranchLand==='beach'){box(g,24,-.02,0,18,.08,64,'#89d4df');for(let k=0;k<6;k++)box(g,16+k*.36,.035,0,.1,.025,58,k%2?'#d7f7ee':'#b6e8e8');for(let i=0;i<18;i++)ball(g,13+Math.sin(i)*1.8,.06,(i-9)*2,.14,.05,.11,i%2?'#fff2e2':'#efc0d5');}
   if(state.biome==='ranch')this.ranch(state);
-  else {ball(g,wx(820),.025,wz(160),3,.035,1.8,'#99c7cc');for(let i=0;i<7;i++)ball(g,wx(720+i*26),.08,wz(130+i%2*40),.3,.15,.25,'#b9c5b2');}
+  else if(LAKES[state.biome]){const lake=LAKES[state.biome],m=lakeMesh(lake);m.position.set(wx(lake.x),0,wz(lake.y));g.add(m);sign(g,lake.name,wx(lake.x),1.8,wz(lake.y),3);}
   batchScenery(g);
  }
  ranch(state){
@@ -162,12 +204,15 @@ export class World3D {
   }
   box(g,wx(685),.01,wz(284),4,.025,2.6,'#e9dccb',.02);
   for(const p of PENS){const x=wx(p.x),z=wz(p.y),w=p.width*SCALE,d=p.height*SCALE;box(g,x+w/2,.008,z+d/2,w,.02,d,p.color,.02);
+   if(state.fenceStyle){for(const pz of [z,z+d]){const f=fenceMesh(state.fenceStyle,w);f.position.set(x+w/2,0,pz);g.add(f);}for(const px of [x,x+w]){const f=fenceMesh(state.fenceStyle,d);f.rotation.y=Math.PI/2;f.position.set(px,0,z+d/2);g.add(f);}}else{
    for(let k=0;k<=10;k++){const px=x+k*w/10;for(const pz of [z,z+d])cylinder(g,px,.45,pz,.055,.06,.9,trim);}
    for(let k=0;k<=7;k++){const pz=z+k*d/7;for(const px of [x,x+w])cylinder(g,px,.45,pz,.055,.06,.9,trim);}
    for(const pz of [z,z+d])for(const h of [.27,.65])box(g,x+w/2,h,pz,w,.075,.085,trim,.03);
    for(const px of [x,x+w])for(const h of [.27,.65])box(g,px,h,z+d/2,.085,.075,d,trim,.03);
-   sign(g,p.name,x+w/2,1.25,z,2.4);
+   }
+   sign(g,p.name,x+w/2,1.45,z,2.4);
   }
+  if(state.poolStyle){const pool=poolMesh(state.poolStyle);pool.position.set(wx(RANCH_POOL.x),0,wz(RANCH_POOL.y));g.add(pool);sign(g,POOL_STYLES[state.poolStyle].name,wx(RANCH_POOL.x),1.5,wz(RANCH_POOL.y)-1.8,3);}
   const patioX=wx(250),patioZ=wz(240);const outside=state.owned.filter(id=>['sofa','table','chair','planter','lanterns'].includes(id)&&!state.decor?.[id]);
   if(outside.length)box(g,patioX,.03,patioZ,6,.06,5,'#eddde7');
   outside.forEach((id,i)=>{const furniture=furnitureMesh(id);furniture.position.set(patioX+(i%3-1)*1.9,0,patioZ+Math.floor(i/3)*1.8);g.add(furniture);});
@@ -184,7 +229,7 @@ export class World3D {
   else sign(g,'HOME SWEET HOME',0,2.9,-3.7,2.8);
   for(const [id,p] of Object.entries(state.decor||{})){if(p.room!==state.room)continue;const m=furnitureMesh(id);m.position.set(SPOTS[p.spot][0],0,SPOTS[p.spot][1]);m.rotation.y=p.rotation*Math.PI/2;g.add(m);}
  }
- blocked(x,y,state){if(state.room){if(x<395||x>565||y<205||y>380)return true;return Object.values(state.decor||{}).some(p=>p.room===state.room&&Math.hypot(wx(x)-SPOTS[p.spot][0],wz(y)-SPOTS[p.spot][1])<.7);}if(state.biome!=='ranch')return false;return (x>373&&x<527&&y>155&&y<256)||(x>634&&x<736&&y>165&&y<255);}
+ blocked(x,y,state){if(waterAt(state,x,y)&&!isSwimOutfit(state.avatar.outfit))return true;if(state.room){if(x<395||x>565||y<205||y>380)return true;return Object.values(state.decor||{}).some(p=>p.room===state.room&&Math.hypot(wx(x)-SPOTS[p.spot][0],wz(y)-SPOTS[p.spot][1])<.7);}if(state.biome!=='ranch')return false;return (x>373&&x<527&&y>155&&y<256)||(x>634&&x<736&&y>165&&y<255);}
  candidates(state,wild,residents,nodes,clock){return state.biome==='ranch'?[...residents.values()].map(o=>({type:'resident',object:o})):[...wild.filter(c=>c.wait<=clock).map(o=>({type:'creature',object:o})),...nodes.filter(n=>n.ready<=clock).map(o=>({type:'material',object:o}))];}
  aim(state,items){let best=null;for(const item of items){const distance=Math.hypot(item.object.x-state.x,item.object.y-state.y);if(!best||distance<best.distance)best={...item,distance};}return best;}
  animateVacuum(){this.pulse=.55;}
@@ -195,7 +240,7 @@ export class World3D {
   const creatures=state.room?[]:state.biome==='ranch'?[...residents.values()]:wild.filter(c=>c.wait<=clock),active=new Set();
   for(const [i,c] of creatures.entries()){const key=state.biome==='ranch'?`r${c.id}`:`w${wild.indexOf(c)}`,sig=String(c.species);active.add(key);let entry=this.actors.get(key);
    if(!entry||entry.species!==sig){if(entry)this.dynamic.remove(entry.group);const group=creatureMesh(c.species),shadow=blob(group,0,0,.48);entry={group,species:sig};this.actors.set(key,entry);this.dynamic.add(group);}
-   entry.group.position.set(wx(c.x),c.rest>0?0:Math.abs(Math.sin(clock*4+c.seed))*.035,wz(c.y));const desired=c.goal?Math.atan2(c.goal.x-c.x,c.goal.y-c.y):0;
+   entry.group.position.set(wx(c.x),state.biome==='reef'?.6+Math.sin(clock*1.5+c.seed)*.22:c.rest>0?0:Math.abs(Math.sin(clock*4+c.seed))*.035,wz(c.y));const desired=c.goal?Math.atan2(c.goal.x-c.x,c.goal.y-c.y):0;
    entry.group.rotation.y+=Math.atan2(Math.sin(desired-entry.group.rotation.y),Math.cos(desired-entry.group.rotation.y))*Math.min(1,dt*2);
   }
   for(const [key,entry] of this.actors)if(!active.has(key)){this.dynamic.remove(entry.group);this.actors.delete(key);}

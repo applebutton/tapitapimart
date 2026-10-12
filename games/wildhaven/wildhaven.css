@@ -39,3 +39,5 @@ dialog{background:#fffaff;border:3px solid #dcc5ef;border-radius:26px;box-shadow
 
 /* Keep the world and illustrated wardrobe crisp, including on high-density screens. */
 #world{filter:none} #reticle{display:block!important;pointer-events:none;width:5px;height:5px;border:1px solid #b493c5;border-radius:50%;background:#fff8fc;box-shadow:0 0 0 2px #fff8fc66}
+
+.water-controls{padding:12px 20px;background:#e9f7f6;color:#537a85;border-top:1px solid #cee7e8}.water-controls>span{display:block;font-size:12px;margin-bottom:9px}.water-controls>div{display:flex;flex-wrap:wrap;gap:8px}.water-controls button{border:1px solid #bfdddd;background:#faffff;color:#557987;padding:10px 13px;border-radius:13px;font:inherit;font-size:12px;min-height:42px}.water-controls button:disabled{opacity:.5}.destination-icon.reef{background:#d5f2ef;color:#539d9f}@media(max-width:760px){.water-controls{padding:10px}.water-controls button{flex:1 1 auto}}

@@ -1,9 +1,10 @@
-import {AVATAR_OPTIONS} from './catalog.js';
+import {AVATAR_OPTIONS,SWIM_OUTFITS} from './catalog.js';
 import {BIOMES,PENS,creatureInfo} from './engine.js';
 import {SPOTS} from './housing.js';
 const ink='#997b9f';
 function load(name){const img=new Image();img.onload=()=>window.dispatchEvent(new Event('wildhaven-art-ready'));img.src=new URL(name,import.meta.url).href;return img;}
 const environment=load('./anime-environment.png');
+const swimwear=load('./anime-swimwear.png'),aquatic=load('./anime-aquatic.png');
 const accessories=load('./anime-accessories.png');
 const outfits=load('./anime-outfits.png'),heads=load('./anime-heads.png');
 const creatures=load('./anime-creatures.png'),sky=load('./anime-sky.png');
@@ -14,8 +15,14 @@ function rect(c,x,y,w,h,fill,r=5){shape(c,fill,()=>c.roundRect(x,y,w,h,r));}
 function line(c,points,color=ink,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.stroke();}
 function text(c,str,x,y,size=14){c.font=`bold ${size}px "Trebuchet MS", sans-serif`;c.textAlign='center';c.fillStyle=ink;c.fillText(str,x,y);}
 function bow(c,x,y,s=10){shape(c,'#ef9fc3',()=>{c.moveTo(x,y);c.lineTo(x-s,y-s*.6);c.quadraticCurveTo(x-s*1.3,y+s,x,y);c.lineTo(x+s,y-s*.6);c.quadraticCurveTo(x+s*1.3,y+s,x,y);});oval(c,x,y,3,3,'#ffdaea');}
+const aquaticCache=new Map();
+export function aquaticCanvas(index){
+ if(!ready(aquatic))return null;if(aquaticCache.has(index))return aquaticCache.get(index);
+ const rects=[[0,140,530,690],[530,170,520,665],[1050,245,486,560]],r=rects[index];if(!r)return null;
+ const c=document.createElement('canvas');c.width=c.height=512;const q=c.getContext('2d'),ratio=470/Math.max(r[2],r[3]),w=r[2]*ratio,h=r[3]*ratio;q.drawImage(aquatic,...r,(512-w)/2,500-h,w,h);aquaticCache.set(index,c);return c;
+}
 export function drawFriend(c,type,x,y,size=62){
- const info=creatureInfo(type);if(!info)return;
+ const info=creatureInfo(type);if(!info)return;const base=typeof type==='number'?type:Number(String(type).split('-')[1]);if(base>=6){const art=aquaticCanvas(base-6);if(art){const w=size*(info.giant?1.55:1);c.drawImage(art,x-w/2,y-w,w,w);if(info.giant)bow(c,x,y-w*.15,w*.13);}return;}
  if(ready(creatures)){const index=typeof type==='number'?type:Number(String(type).split('-')[1]),cw=creatures.naturalWidth/3,ch=creatures.naturalHeight/2;const w=size*(info.giant?1.55:1);c.drawImage(creatures,index%3*cw,Math.floor(index/3)*ch,cw,ch,x-w/2,y-w,w,w);if(info.giant){bow(c,x,y-w*.15,w*.13);}return;}
  oval(c,x,y-size*.4,size*.4,size*.4,info.color);oval(c,x-8,y-size*.45,3,5,ink);oval(c,x+8,y-size*.45,3,5,ink);
 }
@@ -31,22 +38,22 @@ function isolateLayer(pixels,width,height){
  for(let i=0;i<tags.length;i++)if(tags[i]!==largest&&!((i%width&&tags[i-1]===largest)||(i%width<width-1&&tags[i+1]===largest)||tags[i-width]===largest||tags[i+width]===largest))d[i*4+3]=0;
 }
 const headRects=[[0,0,494,436,260,396],[510,0,512,443,258,391],[1040,0,496,478,195,402],[0,460,512,480,260,412],[480,454,580,570,288,380]];
-function dollLayer(image,index,cols,avatar,head=false){
+function dollLayer(image,index,cols,avatar,head=false,rows=2){
  const key=[image.src,index,avatar.skin,head?avatar.hairColor:''].join('|');if(dollCache.has(key))return dollCache.get(key);
- const c=document.createElement('canvas');const crop=head?headRects[index]:[index%cols*image.naturalWidth/cols,Math.floor(index/cols)*image.naturalHeight/2,image.naturalWidth/cols,image.naturalHeight/2];c.width=crop[2];c.height=crop[3];const q=c.getContext('2d');q.drawImage(image,...crop.slice(0,4),0,0,c.width,c.height);
+ const c=document.createElement('canvas');const crop=head?headRects[index]:[index%cols*image.naturalWidth/cols,Math.floor(index/cols)*image.naturalHeight/rows,image.naturalWidth/cols,image.naturalHeight/rows];c.width=crop[2];c.height=crop[3];const q=c.getContext('2d');q.drawImage(image,...crop.slice(0,4),0,0,c.width,c.height);
  const pixels=q.getImageData(0,0,c.width,c.height),d=pixels.data,rgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)),skin=rgb(avatar.skin),hair=rgb(avatar.hairColor);
  isolateLayer(pixels,c.width,c.height);
  for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){const i=(y*c.width+x)*4;if(d[i+3]<80)continue;const r=d[i],g=d[i+1],b=d[i+2],u=x/c.width,v=y/c.height;
   // Skin uses warm peach; pink clothing and hair are outside this color range.
-  const skinArea=head?(u>.19&&u<.81&&v>.32&&v<.83):(v<.11||(u<.23||u>.77)&&v>.20&&v<.57);
+  const skinArea=head?(u>.19&&u<.81&&v>.32&&v<.83):image===swimwear?(v<.18||(u<.31||u>.69)&&v<.5||v>.42&&v<.82):(v<.11||(u<.23||u>.77)&&v>.20&&v<.57);
   if(skinArea&&r>g+7&&g>b+10&&r>155){const light=Math.min(1.18,(r+g+b)/665);for(let k=0;k<3;k++)d[i+k]=Math.min(255,skin[k]*light);}
   else if(head&&r>g*1.14&&b>g*.94&&r>105){const light=(r+g+b)/590;for(let k=0;k<3;k++)d[i+k]=Math.min(255,hair[k]*light);}
  }
  q.putImageData(pixels,0,0);dollCache.set(key,c);return c;
 }
 function drawAvatar(c,state,x,y,height=116){
- if(!ready(outfits)||!ready(heads)){text(c,'Loading your anime avatar…',x,y,12);return;}
- const a=state.avatar,body=dollLayer(outfits,Math.max(0,AVATAR_OPTIONS.outfit.indexOf(a.outfit)),4,a),head=dollLayer(heads,Math.max(0,AVATAR_OPTIONS.hair.indexOf(a.hair)),3,a,true);
+ if(!ready(outfits)||!ready(heads)||(SWIM_OUTFITS.includes(state.avatar.outfit)&&!ready(swimwear))){text(c,'Loading your anime avatar…',x,y,12);return;}
+ const a=state.avatar,swim=SWIM_OUTFITS.indexOf(a.outfit),body=swim>=0?dollLayer(swimwear,swim,3,a,false,1):dollLayer(outfits,Math.max(0,AVATAR_OPTIONS.outfit.indexOf(a.outfit)),4,a),head=dollLayer(heads,Math.max(0,AVATAR_OPTIONS.hair.indexOf(a.hair)),3,a,true);
  c.save();c.translate(x,y-height);c.scale(height/300,height/300);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
  // Longer body and smaller head give the same avatar taller anime proportions.
  // Paint the whole hair silhouette behind clothes, then only the face/bangs in front.
@@ -114,7 +121,7 @@ export class AvatarPreview {
 }
 const photoCache=new Map();
 export function shopPicture(item,state){
- const key=item.id+JSON.stringify(state.avatar)+(ready(heads)&&ready(outfits)?'d':'')+(ready(accessories)?'a':'')+(ready(creatures)?'c':'')+(ready(environment)?'e':'');if(photoCache.has(key))return photoCache.get(key);
+ const key=item.id+JSON.stringify(state.avatar)+(ready(heads)&&ready(outfits)?'d':'')+(ready(swimwear)?'s':'')+(ready(aquatic)?'w':'')+(ready(accessories)?'a':'')+(ready(creatures)?'c':'')+(ready(environment)?'e':'');if(photoCache.has(key))return photoCache.get(key);
  const canvas=document.createElement('canvas');canvas.width=640;canvas.height=480;const c=canvas.getContext('2d');c.scale(2,2);c.fillStyle=item.color;c.fillRect(0,0,320,240);
  if(item.kind==='furniture')drawFurniture(c,item.id,160,130,2);
  else if(item.kind==='avatar'){const copy=structuredClone(state);copy.avatar[item.slot]=item.value;drawAvatar(c,copy,160,235,230);}

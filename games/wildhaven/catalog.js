@@ -2,17 +2,32 @@ export const AVATAR_OPTIONS = {
   skin: ['#f5d8bb', '#e7b98e', '#ce936c', '#aa7250', '#805239', '#543929'],
   hairColor: ['#3e302e', '#79523b', '#c39458', '#e8cc8d', '#c58da8', '#efa0bd', '#8b80b0'],
   hair: ['bob', 'curls', 'ponytail', 'space-buns', 'sugarcloud-waves'],
-  outfit: ['overalls', 'hoodie', 'cloud-dress', 'star-hoodie', 'sugarcloud-dress', 'blossom-tea', 'ivory-lace', 'ribbon-mage'],
+  outfit: ['overalls', 'hoodie', 'cloud-dress', 'star-hoodie', 'sugarcloud-dress', 'blossom-tea', 'ivory-lace', 'ribbon-mage', 'petal-swimsuit', 'coral-rashguard', 'starlight-swimsuit'],
   accessory: ['none', 'star-clip', 'round-glasses', 'bunny-beret'],
 };
-export const OUTFIT_COLORS={'overalls':'#a9c1a3','hoodie':'#edafcc','cloud-dress':'#bcd7ef','star-hoodie':'#c6a9e5','sugarcloud-dress':'#dbb7ed','blossom-tea':'#f2b1d2','ivory-lace':'#fff0e1','ribbon-mage':'#b6bce9'};
+export const OUTFIT_COLORS={'overalls':'#a9c1a3','hoodie':'#edafcc','cloud-dress':'#bcd7ef','star-hoodie':'#c6a9e5','sugarcloud-dress':'#dbb7ed','blossom-tea':'#f2b1d2','ivory-lace':'#fff0e1','ribbon-mage':'#b6bce9','petal-swimsuit':'#efb1cc','coral-rashguard':'#a9dfd2','starlight-swimsuit':'#b6b8eb'};
 export const HOUSE_STYLES={
  'sakura-cottage':{name:'Sakura cottage',wall:'#ffe2ef',roof:'#d9b4ea',trim:'#f4afce',shape:'gable'},
  'seaside-home':{name:'Seashell beach house',wall:'#fdf0d7',roof:'#aadadf',trim:'#95c7d3',shape:'beach'},
  'forest-cabin':{name:'Woodland storybook cabin',wall:'#e4d2b5',roof:'#a3c6ad',trim:'#c2aa8d',shape:'woodland'},
  'modern-home':{name:'Pastel modern home',wall:'#fff2f4',roof:'#cabbe2',trim:'#c1dcd8',shape:'modern'},
 };
+export const SWIM_OUTFITS=['petal-swimsuit','coral-rashguard','starlight-swimsuit'];
+export const FENCE_STYLES={
+ 'bunny-fence':{name:'Bunny bow fence',color:'#f2c3dc',accent:'#fff0f8',charm:'bunny'},
+ 'star-fence':{name:'Starlight charm fence',color:'#cbc1ef',accent:'#fff0ad',charm:'star'},
+ 'shell-fence':{name:'Seashell pearl fence',color:'#b8e2dc',accent:'#f8d3e5',charm:'shell'},
+};
+export const POOL_STYLES={
+ 'blossom-pool':{name:'Blossom bow pool',color:'#efbed8',accent:'#fff2f8',water:'#8bdedc',charm:'bunny'},
+ 'moon-pool':{name:'Moonbeam star pool',color:'#c4b6e6',accent:'#fff0ac',water:'#a3cdec',charm:'star'},
+ 'shell-pool':{name:'Pearl lagoon pool',color:'#adddd4',accent:'#f5d7e7',water:'#7cd8d8',charm:'shell'},
+};
 export const SHOP = [
+ {id:'coral-rashguard',category:'Swimwear',name:'Coral rashguard set',price:14,kind:'avatar',slot:'outfit',value:'coral-rashguard',icon:'≈',color:'#c0e8df',description:'A cute mint swim shirt, swim shorts and water shoes. Ready for lakes, pools and the reef.'},
+ {id:'starlight-swimsuit',category:'Swimwear',name:'Starlight swim dress',price:16,kind:'avatar',slot:'outfit',value:'starlight-swimsuit',icon:'★',color:'#d1c9ef',description:'A periwinkle one-piece with a little swim skirt, flutter sleeves and golden stars.'},
+ ...Object.entries(FENCE_STYLES).map(([id,p])=>({id,category:'Fences',name:p.name,price:22,kind:'fence',value:id,icon:'♡',color:p.color,description:'Decorates all three pens with matching charms, bows and glowing fairy lights. Switch owned styles free.'})),
+ ...Object.entries(POOL_STYLES).map(([id,p])=>({id,category:'Pools',name:p.name,price:30,kind:'pool',value:id,icon:'≈',color:p.color,description:'A swimmable ranch pool beside your pens, with floating lights and cute decorations. Switch owned pool styles free.'})),
  {id:'blossom-tea',category:'Avatar',name:'Blossom tea dress',price:18,kind:'avatar',slot:'outfit',value:'blossom-tea',icon:'♡',color:'#f2c4df',description:'Pink and lavender ruffles, puff sleeves, and big ribbon bows. Illustrated in our shared anime style.'},
  {id:'ivory-lace',category:'Avatar',name:'Ivory rose lace',price:18,kind:'avatar',slot:'outfit',value:'ivory-lace',icon:'❀',color:'#f5e6db',description:'An ivory tea dress with rose embroidery, long sleeves, and layers of lace.'},
  {id:'ribbon-mage',category:'Avatar',name:'Bluebell ribbon mage',price:20,kind:'avatar',slot:'outfit',value:'ribbon-mage',icon:'✧',color:'#cdd3ef',description:'A blue-and-pink cape dress with a huge bow, frilled skirt, and a bunny pocket.'},
@@ -45,4 +60,4 @@ export const SHOP = [
   { id:'cookie-pack', category:'Food', name:'3 star cookies', price:6, kind:'supply', material:'starfood', amount:3, icon:'★', color:'#ead298', description:'A special snack. Each cookie gives 40 happiness.' },
 ];
 export const SKU = Object.fromEntries(SHOP.map(item=>[item.id,item]));
-export const FREE_AVATAR = { hair:['bob','curls','ponytail','sugarcloud-waves'], outfit:['overalls','hoodie','sugarcloud-dress'], accessory:['none','bunny-beret'] };
+export const FREE_AVATAR = { hair:['bob','curls','ponytail','sugarcloud-waves'], outfit:['overalls','hoodie','sugarcloud-dress','petal-swimsuit'], accessory:['none','bunny-beret'] };

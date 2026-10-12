@@ -1,3 +1,4 @@
+import {restoreWater,isSwimOutfit,waterAt,LAKES} from './water.js';
 import {restoreHousing} from './housing.js';
 import { AVATAR_OPTIONS, FREE_AVATAR, SHOP, SKU } from './catalog.js';
 export const SPECIES = [
@@ -7,8 +8,12 @@ export const SPECIES = [
   { name: 'Dewdrop', biome: 'grove', color: '#8bddd3', accent: '#438d92', shape: 'drop', note: 'Sings softly when the forest gets quiet.' },
   { name: 'Emberling', biome: 'ridge', color: '#ffab8c', accent: '#a75465', shape: 'fox', note: 'A pocket-sized spark with a gentle heart.' },
   { name: 'Moonmoth', biome: 'ridge', color: '#d9e4ff', accent: '#9297c4', shape: 'moth', note: 'Collects moonlight on its velvet wings.' },
+  {name:'Pearlfin',biome:'reef',color:'#f2b8d6',accent:'#9fded8',shape:'axolotl',note:'A pearl-loving axolotl with tiny fluttering gills.'},
+  {name:'Bubblebun',biome:'reef',color:'#9ce1df',accent:'#b9a6e5',shape:'sea-bunny',note:'A sea bunny that leaves happy bubbles behind.'},
+  {name:'Starjelly',biome:'reef',color:'#d3b9ef',accent:'#f6dd9b',shape:'jellyfish',note:'A gentle jellyfish carrying little golden stars.'},
 ];
 export const BIOMES = {
+  reef:{name:'Coral Dream Lagoon',subtitle:'Swim with little ocean wonders',ground:'#b8d8d1',shade:'#72bec6'},
   ranch: { name: 'Your ranch', subtitle: 'A soft place to land', ground: '#bed295', shade: '#a9c37f' },
   meadow: { name: 'Sunpetal Meadow', subtitle: 'Where every adventure begins', ground: '#b1cd8b', shade: '#96bb74' },
   grove: { name: 'Whispering Grove', subtitle: 'Follow the little lights', ground: '#89b7a0', shade: '#719e8b' },
@@ -36,16 +41,16 @@ export const HOME_STAGES = [
 ];
 export function creatureInfo(type) {
   if (Number.isInteger(type) && SPECIES[type]) return { ...SPECIES[type], giant: false, genes: [type] };
-  if (typeof type !== 'string' || !/^giant-[0-5]-[0-5]$/.test(type)) return null;
+  if (typeof type !== 'string' || !/^giant-[0-8]-[0-8]$/.test(type)) return null;
   const [, a, b] = type.split('-').map((v, i) => i ? Number(v) : v);
   if (a > b) return null;
   const first = SPECIES[a], second = SPECIES[b];
-  const starts = ['Moss', 'Sunny', 'Glimmer', 'Dew', 'Ember', 'Moon'];
-  const ends = ['bun', 'puff', 'fox', 'drop', 'spark', 'moth'];
+  const starts = ['Moss', 'Sunny', 'Glimmer', 'Dew', 'Ember', 'Moon','Pearl','Bubble','Star'];
+  const ends = ['bun', 'puff', 'fox', 'drop', 'spark', 'moth','fin','bun','jelly'];
   return { ...first, name: `Giant ${starts[a]}${ends[b]}`, accent: second.color, giant: true, genes: [a, b], note: `A big, bouncy blend of ${first.name} and ${second.name}.` };
 }
 export function freshState(now = Date.now()) {
-  return { version: 3, room:null, houseStyle:null, ranchLand:'sakura', decor:{}, sugarcloudEquipped: true, owned: [], avatar: {skin:'#e7b98e',hairColor:'#efa0bd',hair:'sugarcloud-waves',outfit:'sugarcloud-dress',accessory:'bunny-beret'}, toolStyle:'mint', ranchTheme:'woodland', pet:null, yaw:0, pitch:-.14, gems: 0, materials: { berries: 8, wood: 0, stone: 0, metal:0, starfood:0 }, collection: [], homeLevel: 0, biome: 'meadow', x: 480, y: 400, health: 3, coat: '#dd846a', lastSaved: now, nextId: 1 };
+  return { version: 3, poolStyle:null,fenceStyle:null,swimDepth:1.5,surfaceReturn:'meadow', room:null, houseStyle:null, ranchLand:'sakura', decor:{}, sugarcloudEquipped: true, owned: [], avatar: {skin:'#e7b98e',hairColor:'#efa0bd',hair:'sugarcloud-waves',outfit:'sugarcloud-dress',accessory:'bunny-beret'}, toolStyle:'mint', ranchTheme:'woodland', pet:null, yaw:0, pitch:-.14, gems: 0, materials: { berries: 8, wood: 0, stone: 0, metal:0, starfood:0 }, collection: [], homeLevel: 0, biome: 'meadow', x: 480, y: 400, health: 3, coat: '#dd846a', lastSaved: now, nextId: 1 };
 }
 const clamp = (v, min, max, fallback) => Number.isFinite(v) ? Math.max(min, Math.min(max, v)) : fallback;
 export function loadState(raw, now = Date.now()) {
@@ -80,7 +85,7 @@ export function loadState(raw, now = Date.now()) {
     if(s.version<3&&state.biome==='ranch'){state.x=480;state.y=548;}
     state.yaw=clamp(s.yaw,-1000,1000,0);state.pitch=clamp(s.pitch,-1.05,.8,-.14);
     if (!s.sugarcloudEquipped) Object.assign(state.avatar, {hairColor:'#efa0bd',hair:'sugarcloud-waves',outfit:'sugarcloud-dress',accessory:'bunny-beret'});
-    restoreHousing(state,s);
+    restoreHousing(state,s);restoreWater(state,s);
     return state;
   } catch { return freshState(now); }
 }
@@ -152,8 +157,9 @@ export function tradeTreats(state) {
   state.gems -= 5; state.materials.berries += 5; return true;
 }
 export function travel(state, biome) {
-  state.room=null;
   if (!Object.hasOwn(BIOMES, biome)) return;
+  if(biome==='reef'){if(Object.hasOwn(LAKES,state.biome))state.surfaceReturn=state.biome;if(!isSwimOutfit(state.avatar.outfit))state.avatar.outfit='petal-swimsuit';state.swimDepth=1.5;}
+  state.room=null;
   state.biome = biome; state.yaw=0;state.pitch=-.14; state.x = 480; state.y = biome === 'ranch' ? 548 : 440;
   if (biome === 'ranch') state.health = 3;
 }
@@ -187,7 +193,7 @@ export function avatarAllowed(state, key, value) {
   return FREE_AVATAR[key]?.includes(value)||state.owned.includes(value);
 }
 export function setAvatar(state,key,value) {
-  if(!avatarAllowed(state,key,value))return false;
+  if(!avatarAllowed(state,key,value)||(key==='outfit'&&waterAt(state)&&!isSwimOutfit(value)))return false;
   state.avatar[key]=value;return true;
 }
 export function purchase(state,id) {
@@ -199,7 +205,7 @@ export function purchase(state,id) {
   state.gems-=item.price;
   if(item.kind==='supply')state.materials[item.material]+=item.amount;
   else {state.owned.push(id);equipPurchase(state,id);}
-  return {ok:true,message:`${item.name} is yours!${item.kind==='furniture'?' It is already placed beside your home.':item.kind==='house'?' Your home is ready. Choose Enter cabin to decorate inside.':''}`};
+  return {ok:true,message:`${item.name} is yours!${item.kind==='furniture'?' It is already placed beside your home.':item.kind==='pool'?' Your pool is placed by the pens. Choose Swim in pool!':item.kind==='fence'?' Your new fences are already around all three pens!':item.kind==='house'?' Your home is ready. Choose Enter cabin to decorate inside.':''}`};
 }
 export function equipPurchase(state,id) {
   const item=Object.hasOwn(SKU,id)?SKU[id]:null;if(!item||!state.owned.includes(id))return {ok:false,message:'Buy this item first.'};
@@ -207,6 +213,8 @@ export function equipPurchase(state,id) {
   if(item.kind==='tool')state.toolStyle=item.value;
   if(item.kind==='theme')state.ranchTheme=item.value;
   if(item.kind==='pet')state.pet=item.value;
+  if(item.kind==='pool')state.poolStyle=item.value;
+  if(item.kind==='fence')state.fenceStyle=item.value;
   if(item.kind==='house'){state.houseStyle=item.value;state.homeLevel=Math.max(1,state.homeLevel);}
   return {ok:true,message:`${item.name} is ready!`};
 }

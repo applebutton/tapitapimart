@@ -6,7 +6,7 @@ Choose Easy for random moves, Medium for immediate wins and blocks, or Hard for 
 
 ## Wildhaven
 
-Open `games/wildhaven/`, or choose Wildhaven on the game shelf. A cute, open-ended first-person 3D survival adventure: explore three biomes with a magical vacuum, collect six small creature species and wild giants, gather berries/wood/moonstones, and build a home at your ranch.
+Open `games/wildhaven/`, or choose Wildhaven on the game shelf. A cute, open-ended first-person 3D survival adventure: explore three land biomes and an underwater lagoon with a magical vacuum, collect nine small creature species and wild giants, gather berries/wood/moonstones, and build a home at your ranch.
 
 Swipe or drag the world to look around. Move with WASD / arrow keys or the on-screen direction buttons. Q / R turn and Page Up / Page Down look up and down. Space / E or **Vacuum** collects a creature or material near the center of your view and within reach. **Inventory** (or I) shows everything carried, capped at 30 of each material and creature type. Inventory, wardrobe, and shop dialogs pause exploration while open. Stardust is a separate reward currency.
 
@@ -43,6 +43,12 @@ In repository Settings → Pages, select **Deploy from a branch**, then **main**
 
 The expected URL is https://applebutton.github.io/tapitapimart/. All asset paths, the manifest, and the service worker support this repository subpath. Free GitHub Pages requires a public repository on GitHub Free; do not change repository visibility without reviewing what will become public.
 
-Wildhaven v14 uses first-person eye-level viewing indoors and outside. Drag/swipe to look, WASD/arrows to move, Q/R to turn. Rounded scenery, houses, furniture, supplies, and tools share soft cel shading and rounded forms without black outlines. The wardrobe combines matching illustrated heads and eight outfits, including Blossom tea dress, Ivory rose lace, and Bluebell ribbon mage in the Creator’s Shed. High-density canvases and unblurred dialogs keep artwork sharp.
+Wildhaven v15 uses first-person eye-level viewing indoors and outside. Drag/swipe to look, WASD/arrows to move, Q/R to turn. Rounded scenery, houses, furniture, supplies, and tools share soft cel shading and rounded forms without black outlines. The wardrobe combines matching illustrated heads and eleven outfits, including Blossom tea dress, Ivory rose lace, and Bluebell ribbon mage in the Creator’s Shed. High-density canvases and unblurred dialogs keep artwork sharp.
 
 The v14 wardrobe uses taller anime proportions and layers long hair behind every outfit, with the face and bangs in front. The illustrated creatures, scenery, clothing, and accessories use colored shading instead of black contour lines.
+
+Swimming (v15): choose **Swim in lake** in the meadow, grove, or ridge. This equips the free Petal swim dress if needed; Coral rashguard and Starlight swim dress are sold under **Swimwear**. Move normally to swim or walk ashore. **Dive to coral lagoon** opens the underwater location; **Float up / Swim deeper** change depth, and **Surface at lake** returns to your starting lake. Magical swimwear has unlimited air. The Lagoon destination also provides direct access. Everyday outfits can be equipped after stepping ashore.
+
+The Creator’s Shed has three **Fences** (bunny bows, starlight charms, seashell pearls) and three **Pools** (Blossom, Moonbeam, Pearl lagoon), all with picture previews. Fence purchases immediately decorate all pens with charms and lights. Pool purchases immediately place one swimmable pool beside the pens. Switch owned styles without paying again; use **See at ranch** to find them. Ranch location changes preserve these upgrades.
+
+Pearlfin, Bubblebun, and Starjelly are exclusive underwater catches. Each type keeps the 30-per-type vacuum limit. They can live in magical ranch pens, receive care and rewards, and combine with any other species; aquatic giants persist through saving and reload. Existing saves keep their purchases, creatures and home, with no pool or special fence until purchased. Everything, including the new artwork, is cached for offline play.

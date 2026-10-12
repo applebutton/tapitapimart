@@ -1,3 +1,4 @@
+import {waterAt,waterArea,startSwimming,leaveWater,canDive,surface,changeDepth,RANCH_POOL} from './water.js';
 import {LANDS,ROOMS,SPOTS,enterRoom,leaveRoom,setLand,placeFurniture} from './housing.js';
 import { World3D, shopPicture as housePicture } from './world3d.js';
 import { AvatarPreview, shopPicture as illustratedPicture, drawFriend } from './world2d.js';
@@ -25,7 +26,7 @@ function save() {
   state.lastSaved = Date.now();
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); saveOkay = true; }
   catch { saveOkay = false; }
-  $('#save-status').textContent = saveOkay ? 'Saved on this device · v14' : 'Saving unavailable · keep this tab open';
+  $('#save-status').textContent = saveOkay ? 'Saved on this device · v15' : 'Saving unavailable · keep this tab open';
 }
 function announce(message) { $('#message').textContent = message; if($('#inventory').open)$('#inventory-message').textContent=message;if($('#shed-dialog').open)$('#shop-message').textContent=message;if($('#avatar-dialog').open)$('#avatar-message').textContent=message; }
 function scatter(x, y, color, count = 14) {
@@ -33,11 +34,12 @@ function scatter(x, y, color, count = 14) {
 }
 function populate() {
   const species = SPECIES.flatMap((s, i) => s.biome === state.biome ? [i] : []);
-  wild = state.biome === 'ranch' ? [] : Array.from({ length: 5 }, (_, i) => ({ species: species[i % 2], x: [480, 640, 240, 770, 350][i], y: [330, 240, 245, 415, 480][i], seed: i * 2.1, wait: 0 }));
-  const n = state.biome === 'ranch' ? 0 : state.biome === 'ridge' ? 4 : state.biome === 'grove' ? 3 : 2;
+  wild = state.biome === 'ranch' ? [] : Array.from({ length: 5 }, (_, i) => ({ species: species[i % species.length], x: [480, 640, 240, 770, 350][i], y: [330, 240, 245, 415, 480][i], seed: i * 2.1, wait: 0 }));
+  const n = ['ranch','reef'].includes(state.biome) ? 0 : state.biome === 'ridge' ? 4 : state.biome === 'grove' ? 3 : 2;
   wisps = Array.from({ length: n }, (_, i) => ({ x: 210 + i * 210, y: 160 + i * 75, baseX: 210 + i * 210, baseY: 180 + i * 75, seed: i * 2.4 }));
   if(state.biome==='ridge')wild.push({species:'giant-4-5',x:700,y:460,seed:12,wait:0,speed:14});
   berries = [{ type:'berries',x: 170, y: 420, ready: 0 }, { type:'berries',x: 790, y: 290, ready: 0 },{type:'wood',x:540,y:320,ready:0},{type:'wood',x:250,y:480,ready:0},{type:'stone',x:615,y:405,ready:0},{type:'stone',x:320,y:220,ready:0},{type:'metal',x:700,y:350,ready:0}];
+  if(state.biome==='reef'){berries=berries.filter(n=>['stone','metal'].includes(n.type));wild.push({species:'giant-6-8',x:700,y:460,seed:12,wait:0,speed:14});}
   syncResidents();
   target = null; keys.clear();
 }
@@ -87,8 +89,8 @@ function renderShop(){
   for(const card of $('#shop-items').children)card.hidden=!chosen.some(item=>item.id===card.dataset.sku);
   for(const item of chosen){let card=$(`[data-sku="${item.id}"]`);
     if(!card){card=document.createElement('article');card.className='shop-card';card.dataset.sku=item.id;card.innerHTML=`<div class="shop-art" style="--item-color:${item.color}"><img alt="${item.name} preview" loading="lazy"></div><h3>${item.name}</h3><p>${item.description}</p><button data-buy="${item.id}"></button>`;try{card.querySelector('img').src=shopPicture(item,state);}catch{card.querySelector('img').alt=`${item.name} preview unavailable`;}card.querySelector('button').addEventListener('click',()=>{const result=purchase(state,item.id);announce(result.message);if(result.ok){renderUI();save();}else renderShop();$('#shop-message').textContent=result.message;});const view=document.createElement('button');view.dataset.viewPurchase=item.id;view.textContent='See at ranch';view.addEventListener('click',()=>{showPurchase(item.id);});card.append(view);$('#shop-items').append(card);}
-    const owned=state.owned.includes(item.id),button=card.querySelector('button');card.querySelector('[data-view-purchase]').hidden=!owned||!['furniture','theme','house'].includes(item.kind);
-    const equipped=(item.kind==='avatar'&&state.avatar[item.slot]===item.value)||(item.kind==='theme'&&state.ranchTheme===item.value)||(item.kind==='house'&&state.houseStyle===item.value)||(item.kind==='tool'&&state.toolStyle===item.value)||(item.kind==='pet'&&state.pet===item.value)||(['upgrade','furniture'].includes(item.kind)&&owned);
+    const owned=state.owned.includes(item.id),button=card.querySelector('button');card.querySelector('[data-view-purchase]').hidden=!owned||!['furniture','theme','house','pool','fence'].includes(item.kind);
+    const equipped=(item.kind==='pool'&&state.poolStyle===item.value)||(item.kind==='fence'&&state.fenceStyle===item.value)||(item.kind==='avatar'&&state.avatar[item.slot]===item.value)||(item.kind==='theme'&&state.ranchTheme===item.value)||(item.kind==='house'&&state.houseStyle===item.value)||(item.kind==='tool'&&state.toolStyle===item.value)||(item.kind==='pet'&&state.pet===item.value)||(['upgrade','furniture'].includes(item.kind)&&owned);
     const full=item.kind==='supply'&&state.materials[item.material]+item.amount>LIMIT;
     button.textContent=owned?(equipped?'Owned · in use':'Use this'):full?'Inventory full':`Buy · ${item.price} ✧`;
     button.disabled=equipped||full||(!owned&&state.gems<item.price);
@@ -173,7 +175,16 @@ function openInventory() {
   if(paused || modalOpen())return;
   keys.clear();target=null;renderInventory();$('#inventory-message').textContent='';$('#release-pen').value=String(selectedPen);$('#inventory').showModal();
 }
+function renderWater(){
+ const wet=waterAt(state),area=waterArea({...state,room:null}),reef=state.biome==='reef';
+ $('#water-status').textContent=reef?'Underwater · magical swimwear gives you unlimited air':wet?`Swimming · ${wet.name}`:state.biome==='ranch'?(state.poolStyle?'Your pool is ready for a swim.':'Find three pool styles in the Creator’s Shed.'):'A lake is waiting. Your Petal swim dress is free.';
+ $('#swim').hidden=reef||Boolean(wet);$('#swim').textContent=state.biome==='ranch'?'Swim in pool':'Swim in lake';$('#swim').disabled=!area;
+ $('#leave-water').hidden=!wet||reef;$('#dive').hidden=reef||state.biome==='ranch';$('#dive').disabled=!canDive(state);
+ for(const id of ['surface','float-up','swim-down'])$('#'+id).hidden=!reef;
+ $('#float-up').disabled=state.swimDepth<=.5;$('#swim-down').disabled=state.swimDepth>=2.8;
+}
 function renderUI() {
+ renderWater();
   syncResidents();
   $('#gems').textContent = state.gems; $('#treats').textContent = state.materials.berries;
   $('#bag-total').textContent=state.collection.filter(c=>c.location==='vacuum').length;
@@ -235,7 +246,7 @@ function tick(time){
     clock+=dt;
     const forward=(keys.has('up')?1:0)-(keys.has('down')?1:0),strafe=(keys.has('right')?1:0)-(keys.has('left')?1:0);
     const dx=-Math.sin(state.yaw)*forward+Math.cos(state.yaw)*strafe,dy=-Math.cos(state.yaw)*forward-Math.sin(state.yaw)*strafe;
-    if(dx||dy){const d=Math.hypot(dx,dy),nx=Math.max(35,Math.min(WIDTH-35,state.x+dx/d*95*dt)),ny=Math.max(110,Math.min(HEIGHT-30,state.y+dy/d*95*dt));
+    if(dx||dy){const d=Math.hypot(dx,dy),nx=Math.max(35,Math.min(WIDTH-35,state.x+dx/d*(waterAt(state)?65:95)*dt)),ny=Math.max(110,Math.min(HEIGHT-30,state.y+dy/d*(waterAt(state)?65:95)*dt));
       if(!world?.blocked(nx,state.y,state))state.x=nx;if(!world?.blocked(state.x,ny,state))state.y=ny;
     }
     for(const c of wild){if(c.wait>clock)continue;wander(c,dt,{minX:80,maxX:880,minY:150,maxY:515});}
@@ -252,7 +263,7 @@ function tick(time){
     for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=85*dt;p.life-=dt;if(p.life<=0)particles.splice(i,1);}
     for(const c of state.collection.filter(c=>c.location!=='vacuum'))c.happiness=Math.max(25,c.happiness-dt/240);
     const close=nearest();
-    $('#world-hint').textContent=close&&close.distance<vacuumRange(state)?`✧ Vacuum ${targetName(close)}`:state.room?'Inside · drag to look · arrows to walk':state.biome==='ranch'?'Your ranch · drag to look · arrows to walk':'Drag to look · arrows to walk · vacuum nearby friends';
+    $('#world-hint').textContent=close&&close.distance<vacuumRange(state)?`✧ Vacuum ${targetName(close)}`:state.biome==='reef'?'Swim · vacuum ocean friends · float up or swim deeper':waterAt(state)?'Swimming · arrows move · step ashore when ready':state.room?'Inside · drag to look · arrows to walk':state.biome==='ranch'?'Your ranch · drag to look · arrows to walk':'Drag to look · arrows to walk · vacuum nearby friends';
     $('#reticle').classList.toggle('ready',Boolean(close&&close.distance<vacuumRange(state)));
     $('#interact').firstChild.textContent='✧ Vacuum ';
 
@@ -310,11 +321,11 @@ for(const category of ['All',...new Set(SHOP.map(item=>item.category))]){
 for(const [key,container,attr] of [['skin','#skin-options','avatarSkin'],['hairColor','#hair-color-options','avatarHairColor']]){
   AVATAR_OPTIONS[key].forEach((value,i)=>{const b=document.createElement('button');b.dataset[attr]=value;b.style.setProperty('--swatch',value);b.setAttribute('aria-label',`${key==='skin'?'Skin tone':'Hair color'} ${i+1}`);b.addEventListener('click',()=>{setAvatar(state,key,value);renderAvatar();save();});$(container).append(b);});
 }
-for(const key of ['hair','outfit','accessory'])$(`#avatar-${key}`).addEventListener('change',e=>{setAvatar(state,key,e.target.value);renderAvatar();save();});
+for(const key of ['hair','outfit','accessory'])$(`#avatar-${key}`).addEventListener('change',e=>{if(!setAvatar(state,key,e.target.value))announce('Step ashore before changing out of your swimsuit.');renderAvatar();save();});
 function visitRoom(room){if(enterRoom(state,room)){keys.clear();target=null;renderUI();save();announce(`Welcome to ${ROOMS[room]}. Choose Decorate to arrange your furniture.`);canvas.scrollIntoView({block:'center'});}}
 function showPurchase(id){
  const item=SKU[id];if($('#shed-dialog').open)$('#shed-dialog').close();if($('#decor-dialog').open)$('#decor-dialog').close();
- const placement=state.decor[id];if(placement){visitRoom(placement.room);state.x=480+SPOTS[placement.spot][0]/.04;state.y=Math.min(378,290+(SPOTS[placement.spot][1]+1.7)/.04);state.pitch=-.18;save();}else{leaveRoom(state);if(item.kind==='furniture'){state.x=250;state.y=350;}else{state.x=450;state.y=330;}state.yaw=0;state.pitch=-.10;renderUI();save();canvas.scrollIntoView({block:'center'});announce(item.kind==='theme'?`${item.name} is applied to your home and ranch. Themes decorate your home; build the cabin below when you are ready.`:item.kind==='house'?`${item.name} is your active home. Choose Enter cabin to decorate inside.`:`${item.name} is on your patio beside the house.`);}
+ const placement=state.decor[id];if(placement){visitRoom(placement.room);state.x=480+SPOTS[placement.spot][0]/.04;state.y=Math.min(378,290+(SPOTS[placement.spot][1]+1.7)/.04);state.pitch=-.18;save();}else{leaveRoom(state);if(item.kind==='pool'){state.x=RANCH_POOL.x;state.y=RANCH_POOL.y+60;}else if(item.kind==='fence'){state.x=480;state.y=330;state.yaw=Math.PI;}else if(item.kind==='furniture'){state.x=250;state.y=350;}else{state.x=450;state.y=330;}state.yaw=item.kind==='fence'?Math.PI:0;state.pitch=-.10;renderUI();save();canvas.scrollIntoView({block:'center'});announce(item.kind==='pool'?`${item.name} is here. Choose Swim in pool to jump in!`:item.kind==='fence'?`${item.name} now decorates all three pens with charms and lights.`:item.kind==='theme'?`${item.name} is applied to your home and ranch. Themes decorate your home; build the cabin below when you are ready.`:item.kind==='house'?`${item.name} is your active home. Choose Enter cabin to decorate inside.`:`${item.name} is on your patio beside the house.`);}
 }
 function renderDecor(){
  const container=$('#decor-items');container.replaceChildren();const owned=SHOP.filter(i=>i.kind==='furniture'&&state.owned.includes(i.id));
@@ -323,6 +334,12 @@ function renderDecor(){
  try{card.querySelector('img').src=shopPicture(item,state);}catch{}const p=state.decor[item.id];card.querySelector('[data-room]').value=p?.room||'outside';card.querySelector('[data-room] option[value="cabin"]').disabled=!state.homeLevel;card.querySelector('[data-spot]').value=p?.spot||0;card.querySelector('[data-turn]').value=p?.rotation||0;
  card.querySelector('[data-place]').addEventListener('click',()=>{const room=card.querySelector('[data-room]').value,ok=placeFurniture(state,item.id,room,Number(card.querySelector('[data-spot]').value),Number(card.querySelector('[data-turn]').value));$('#decor-message').textContent=ok?`${item.name} placed. Use Find item to see it.`:'That spot is already used. Choose another spot.';if(ok){save();renderUI();}});card.querySelector('[data-find]').addEventListener('click',()=>showPurchase(item.id));container.append(card);}
 }
+$('#swim').addEventListener('click',()=>{if(startSwimming(state)){keys.clear();renderUI();save();announce('Splash! Your swimsuit is ready. Swim with the direction controls.');}});
+$('#leave-water').addEventListener('click',()=>{if(leaveWater(state)){renderUI();save();announce('Back on dry land. You can change outfits in the wardrobe.');}});
+$('#dive').addEventListener('click',()=>{if(canDive(state))go('reef');});
+$('#surface').addEventListener('click',()=>{if(surface(state)){populate();renderUI();save();announce('You surfaced safely at the lake with everything you collected.');}});
+$('#float-up').addEventListener('click',()=>{changeDepth(state,-.35);renderUI();save();});
+$('#swim-down').addEventListener('click',()=>{changeDepth(state,.35);renderUI();save();});
 $('#enter-cabin').addEventListener('click',()=>visitRoom('cabin'));$('#enter-studio').addEventListener('click',()=>visitRoom('shed'));$('#exit-room').addEventListener('click',()=>{leaveRoom(state);renderUI();save();});
 $('#ranch-land').addEventListener('change',e=>{if(setLand(state,e.target.value)){renderUI();save();announce(`Your ranch is now in ${LANDS[state.ranchLand]}. Your home, furniture, and creatures came with you.`);}});
 $('#decorate').addEventListener('click',()=>{keys.clear();renderDecor();$('#decor-message').textContent='';$('#decor-dialog').showModal();});
@@ -339,3 +356,5 @@ if('serviceWorker' in navigator){
 }
 
 window.addEventListener('wildhaven-art-ready',()=>{collectionSignature='';renderUI();for(const card of $('#shop-items').children){const item=SKU[card.dataset.sku];if(item)card.querySelector('img').src=shopPicture(item,state);}});
+
+window.addEventListener('wildhaven-art-ready',()=>{for(const slot of document.querySelectorAll('.creature-slot')){const raw=slot.id.slice(5),type=raw.startsWith('giant-')?raw:Number(raw);drawCreature(slot.querySelector('canvas').getContext('2d'),type,48,66,creatureInfo(type).giant?.95:1.2);}for(const card of document.querySelectorAll('[data-creature]')){const c=state.collection.find(c=>c.id===Number(card.dataset.creature));if(c)drawCreature(card.querySelector('canvas').getContext('2d'),c.species,48,66,1.2);}});
